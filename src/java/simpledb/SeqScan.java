@@ -11,13 +11,6 @@ public class SeqScan implements DbIterator {
 
     private static final long serialVersionUID = 1L;
 
-    private TransactionId tid;
-    private int tableid;
-    private String tableAlias;
-
-    private HeapFile heapFile;
-    private DbFileIterator iterator;
-
     /**
      * Creates a sequential scan over the specified table as a part of the
      * specified transaction.
@@ -34,9 +27,19 @@ public class SeqScan implements DbIterator {
      *            are, but the resulting name can be null.fieldName,
      *            tableAlias.null, or null.null).
      */
+    private TransactionId transId;
+    private int tableId;
+    private String tableAl;
+    private HeapFile fl;
+    private DbFileIterator iter;
+
     public SeqScan(TransactionId tid, int tableid, String tableAlias) {
-	this.tid = tid;
-	reset(tableid, tableAlias);
+        // some code goes here
+	transId = tid;
+	tableId = tableid;
+	tableAl = tableAlias;
+	fl = (HeapFile) Database.getCatalog().getDbFile(tableId);
+	iter = fl.iterator(tid);
     }
 
     /**
@@ -45,7 +48,8 @@ public class SeqScan implements DbIterator {
      *       be the actual name of the table in the catalog of the database
      * */
     public String getTableName() {
-        return Database.getCatalog().getTableName(tableid);
+	return Database.getCatalog().getTableName(this.tableId);
+        //return null;
     }
     
     /**
@@ -53,7 +57,8 @@ public class SeqScan implements DbIterator {
      * */
     public String getAlias()
     {
-        return tableAlias;
+        // some code goes here
+        return this.tableAl;
     }
 
     /**
@@ -69,10 +74,11 @@ public class SeqScan implements DbIterator {
      *            tableAlias.null, or null.null).
      */
     public void reset(int tableid, String tableAlias) {
-        this.tableid = tableid;
-	this.tableAlias = tableAlias;
-	heapFile = (HeapFile) (Database.getCatalog().getDbFile(tableid));
-	iterator = heapFile.iterator(tid);
+        // some code goes here
+	this.tableId = tableid;
+	this.tableAl = tableAlias;
+	this.fl = (HeapFile) Database.getCatalog().getDbFile(tableid);
+	this.iter = fl.iterator(this.transId);
     }
 
     public SeqScan(TransactionId tid, int tableid) {
@@ -80,7 +86,8 @@ public class SeqScan implements DbIterator {
     }
 
     public void open() throws DbException, TransactionAbortedException {
-        iterator.open();
+        // some code goes here
+	this.iter.open();
     }
 
     /**
@@ -94,32 +101,36 @@ public class SeqScan implements DbIterator {
      */
     public TupleDesc getTupleDesc() {
         // some code goes here
-	TupleDesc oldTd = heapFile.getTupleDesc();
-	String[] names = new String[oldTd.numFields()];
-	Type[] types = new Type[oldTd.numFields()];
-	for (int i = 0; i < oldTd.numFields(); i++) {
-		names[i] = tableAlias + oldTd.getFieldName(i);
-		types[i] = oldTd.getFieldType(i);
+        TupleDesc tupleDesc = this.fl.getTupleDesc();
+	String[] fieldAr = new String[tupleDesc.numFields()];
+	Type[] typeAr = new Type[tupleDesc.numFields()];
+	for (int i = 0; i < tupleDesc.numFields(); i++){
+	    fieldAr[i] = this.getAlias() + "." + tupleDesc.getFieldName(i);
+	    typeAr[i] = tupleDesc.getFieldType(i);
 	}
-	TupleDesc newTd = new TupleDesc(types, names);
-        return newTd;
+	TupleDesc aliasTupleDesc = new TupleDesc(typeAr, fieldAr);
+	return aliasTupleDesc;
     }
 
     public boolean hasNext() throws TransactionAbortedException, DbException {
-        return iterator.hasNext();
+        // some code goes here
+        return this.iter.hasNext();
     }
 
     public Tuple next() throws NoSuchElementException,
             TransactionAbortedException, DbException {
-        return iterator.next();
+        // some code goes here
+        return this.iter.next();
     }
 
     public void close() {
-        iterator.close();
+        // some code goes here
+	this.iter.close();
     }
 
     public void rewind() throws DbException, NoSuchElementException,
             TransactionAbortedException {
-        iterator.rewind();
+        // some code goes here
+	this.iter.rewind();
     }
 }

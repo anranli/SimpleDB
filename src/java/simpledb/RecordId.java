@@ -9,8 +9,6 @@ import java.io.Serializable;
 public class RecordId implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private PageId pid;
-    private int tupleno;
 
     /**
      * Creates a new RecordId referring to the specified PageId and tuple
@@ -21,23 +19,29 @@ public class RecordId implements Serializable {
      * @param tupleno
      *            the tuple number within the page.
      */
+    private PageId pageId;
+    private int tupleNum;
+
     public RecordId(PageId pid, int tupleno) {
-	this.pid = pid;
-	this.tupleno = tupleno;
+        // some code goes here
+	pageId = pid;
+	tupleNum = tupleno;
     }
 
     /**
      * @return the tuple number this RecordId references.
      */
     public int tupleno() {
-        return tupleno;
+        // some code goes here
+        return this.tupleNum;
     }
 
     /**
      * @return the page id this RecordId references.
      */
     public PageId getPageId() {
-        return pid;
+        // some code goes here
+        return this.pageId;
     }
 
     /**
@@ -48,17 +52,18 @@ public class RecordId implements Serializable {
      */
     @Override
     public boolean equals(Object o) {
-        if (o == null || !(o instanceof RecordId)) {
+        // some code goes here
+	try {
+	    if (((this.tupleno()) == ((RecordId) o).tupleno()) && ((this.getPageId()).equals(((RecordId) o).getPageId()))) {
+		return true;
+	    }
+	    else {
 		return false;
+	    }
 	}
-	RecordId other = (RecordId) o;
-	if (!other.pid.equals(this.pid)) {
-		return false;
+	catch (Exception e){
+	    return false;
 	}
-	if (other.tupleno != this.tupleno) {
-		return false;
-	}
-	return true;
     }
 
     /**
@@ -69,10 +74,9 @@ public class RecordId implements Serializable {
      */
     @Override
     public int hashCode() {
-	String temp = "" + pid.hashCode() + tupleno;
-        return Integer.parseInt(temp);
-        //throw new UnsupportedOperationException("implement this");
-
+        // some code goes here
+	int hashNumber =  this.tupleno() + this.getPageId().getTableId();
+	return hashNumber;
     }
 
 }

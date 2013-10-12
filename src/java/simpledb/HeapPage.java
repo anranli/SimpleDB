@@ -65,16 +65,19 @@ public class HeapPage implements Page {
         @return the number of tuples on this page
     */
     private int getNumTuples() {        
-	return (BufferPool.PAGE_SIZE * 8) / (td.getSize() * 8 + 1);
+        // some code goes here
+	double tuplesNum = (BufferPool.PAGE_SIZE*8.0)/(td.getSize()*8.0 + 1);
+        return (int) Math.floor(tuplesNum);
     }
 
     /**
      * Computes the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      * @return the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      */
-    private int getHeaderSize() {        
-        return (int) Math.ceil(getNumTuples() / 8.0);
-                 
+    private int getHeaderSize() {  
+	//some code goes here
+	double headerSize = (this.getNumTuples()/8.0);
+	return (int) Math.ceil(headerSize);         
     }
     
     /** Return a view of this page before it was modified
@@ -98,7 +101,7 @@ public class HeapPage implements Page {
      * @return the PageId associated with this page.
      */
     public HeapPageId getId() {
-    	return pid;
+	return this.pid;
     }
 
     /**
@@ -267,25 +270,34 @@ public class HeapPage implements Page {
      * Returns the number of empty slots on this page.
      */
     public int getNumEmptySlots() {
-	int sum = 0;
-	for (int i = 0; i < tuples.length; i++) {
-		if (!isSlotUsed(i)) {
-			sum += 1;
+        // some code goes here
+	int total = 0;
+	for (int i = 0; i < this.header.length; i++){
+	    int currentByte = ((Byte) this.header[i]).intValue();
+	    for (int j = 0; j < 8; j++){		
+		if ((currentByte & 1) == 0) {		    
+		    total++;
 		}
+		currentByte = currentByte >>> 1;
+	    }
 	}
-        return sum;
+        return total;
     }
 
     /**
      * Returns true if associated slot on this page is filled.
      */
     public boolean isSlotUsed(int i) {
-	byte rowdata = header[i/8];
-	byte mask = (byte)(0x1 << (i%8));
-	if ((rowdata & mask) == 0) {
-		return false;
+        // some code goes here
+	Byte currentByte = this.header[(int) Math.floor(i/8.0)];
+	int index = i%8;
+	int slot = ((currentByte >>> index) & 0x01);
+	if (slot == 0){
+	    return false;
 	}
-        return true;
+	else {
+	    return true;
+	}
     }
 
     /**
@@ -296,43 +308,52 @@ public class HeapPage implements Page {
         // not necessary for lab1
     }
 
-    public ArrayList<Tuple> getTupleList() {
-	ArrayList<Tuple> list = new ArrayList<Tuple>();
-	for (int i = 0; i < tuples.length; i++) {
-		if (isSlotUsed(i)) {
-			list.add(tuples[i]);
-		}
-	}
-	return list;
-    }
-
     /**
      * @return an iterator over all tuples on this page (calling remove on this iterator throws an UnsupportedOperationException)
      * (note that this iterator shouldn't return tuples in empty slots!)
      */
     public Iterator<Tuple> iterator() {
-        return new HeapPageIterator(getTupleList());
-    }
+        // some code goes here
+	class iteration implements Iterator<Tuple>{
+	   
+	    private int currentIndex;
+	    private HeapPage pg;
+	    
+	    public iteration(HeapPage thisPage){
+		currentIndex = 0;
+		pg = thisPage;
+	    }
 
-    public class HeapPageIterator<Tuple> implements Iterator<Tuple> {
-	private Iterator<Tuple> iterator;
+	    public boolean hasNext() {
+		return (this.nextSlotNumber() < pg.getNumTuples());
+	    }
 
-	public HeapPageIterator(ArrayList<Tuple> list) {
-		iterator = list.iterator();
-	}
-	
-	public boolean hasNext() {
-		return iterator.hasNext();
-	}
+	    public Tuple next() {
+		Tuple tp = null;
+		if (hasNext()){
+		    tp = pg.tuples[currentIndex];
+		    currentIndex++;
+		}
+		else {
+		    throw new NoSuchElementException();
+		}
+		return tp;
+	    }
+	    
+	    private int nextSlotNumber(){
+		while((currentIndex < pg.getNumTuples()) && !(pg.isSlotUsed(currentIndex))){
+		    currentIndex++;
+		    //System.out.println(currentIndex);
+		}
+		return currentIndex;
+	    }
 
-	public Tuple next() {
-		return iterator.next();
-	}
-
-	public void remove() {
+            public void remove() {
 		throw new UnsupportedOperationException();
-	}
-    }
+            }
+	};
 
+	return new iteration(this);
+    }
 }
 
