@@ -24,8 +24,14 @@ public class JoinPredicate implements Serializable {
      *            Predicate.Op.LESS_THAN_OR_EQ
      * @see Predicate
      */
+    int field1;
+    Predicate.Op op;
+    int field2;
     public JoinPredicate(int field1, Predicate.Op op, int field2) {
         // some code goes here
+        this.field1 = field1;
+        this.op = op;
+        this.field1 = field2;
     }
 
     /**
@@ -36,24 +42,24 @@ public class JoinPredicate implements Serializable {
      */
     public boolean filter(Tuple t1, Tuple t2) {
         // some code goes here
-        return false;
+        return t1.getField(this.getField1()).compare(this.getOperator(), t2.getField(this.getField2()));
     }
     
     public int getField1()
     {
         // some code goes here
-        return -1;
+        return this.field1;
     }
     
     public int getField2()
     {
         // some code goes here
-        return -1;
+        return this.field2;
     }
     
     public Predicate.Op getOperator()
     {
         // some code goes here
-        return null;
+        return this.op;
     }
 }
