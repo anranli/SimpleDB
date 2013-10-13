@@ -172,7 +172,7 @@ public class Join extends Operator {
         this.children[0] = children[0];
         this.children[1] = children[1];
         this.child1 = children[0];
-        this.child2 = childredn[1];
+        this.child2 = children[1];
     }
 
 }

@@ -15,10 +15,6 @@ import java.util.*;
  */
 public class HeapFile implements DbFile {
 
-    private File f;
-    private TupleDesc td;
-    private BufferPool bufferPool;
-
     /**
      * Constructs a heap file backed by the specified file.
      * 
@@ -26,10 +22,13 @@ public class HeapFile implements DbFile {
      *            the file that stores the on-disk backing store for this heap
      *            file.
      */
+    private File file;
+    private TupleDesc tupleDesc;
+
     public HeapFile(File f, TupleDesc td) {
-	this.f = f;
-	this.td = td;
-	bufferPool = new BufferPool(BufferPool.DEFAULT_PAGES);
+        // some code goes here
+	file = f;
+	tupleDesc = td;
     }
 
     /**
@@ -38,7 +37,8 @@ public class HeapFile implements DbFile {
      * @return the File backing this HeapFile on disk.
      */
     public File getFile() {
-        return f;
+        // some code goes here
+        return this.file;
     }
 
     /**
@@ -51,7 +51,8 @@ public class HeapFile implements DbFile {
      * @return an ID uniquely identifying this HeapFile.
      */
     public int getId() {
-	return f.getAbsoluteFile().hashCode();
+        // some code goes here
+        return this.file.getAbsoluteFile().hashCode();
     }
 
     /**
@@ -60,22 +61,25 @@ public class HeapFile implements DbFile {
      * @return TupleDesc of this DbFile.
      */
     public TupleDesc getTupleDesc() {
-	return td;
+        // some code goes here
+        return this.tupleDesc;
     }
 
     // see DbFile.java for javadocs
-    public Page readPage(PageId pid){
-	byte[] b = HeapPage.createEmptyPageData();
+    public Page readPage(PageId pid) {
+        // some code goes here
+	HeapPage pg = null;
 	try {
-		RandomAccessFile file = new RandomAccessFile(f,"r");
-		int offset = pid.pageNumber() * BufferPool.PAGE_SIZE;
-		file.seek(offset);
-		file.read(b);
-        	return new HeapPage((HeapPageId)pid, b);
+	    byte[] byteArray = new byte[BufferPool.PAGE_SIZE];
+	    RandomAccessFile randAccessFile = new RandomAccessFile(this.file, "r");
+	    randAccessFile.skipBytes(pid.pageNumber()*BufferPool.PAGE_SIZE);
+	    randAccessFile.readFully(byteArray);
+	    randAccessFile.close();
+	    pg = new HeapPage((HeapPageId) pid, byteArray);
 	}
-	catch (Exception e) {		
-	}
-	return null;
+	catch(Exception e){
+        }
+	return pg;
     }
 
     // see DbFile.java for javadocs
@@ -88,7 +92,9 @@ public class HeapFile implements DbFile {
      * Returns the number of pages in this HeapFile.
      */
     public int numPages() {
-        return (int) Math.ceil((float)(f.length()) / BufferPool.PAGE_SIZE);
+        // some code goes here
+	
+        return (int) (this.file.length())/(BufferPool.PAGE_SIZE);
     }
 
     // see DbFile.java for javadocs
@@ -107,66 +113,85 @@ public class HeapFile implements DbFile {
         // not necessary for proj1
     }
 
-    public ArrayList<Tuple> getTupleList(TransactionId tid) throws DbException, TransactionAbortedException{
-	ArrayList<Tuple> list = new ArrayList<Tuple>();
-	int np = numPages();
-	for (int i = 0; i < np; i++) {
-		HeapPageId pid = new HeapPageId(getId(), i);
-		HeapPage p = (HeapPage) (bufferPool.getPage(tid, pid, Permissions.READ_ONLY));
-		list.addAll(p.getTupleList());
-	}
-	return list;
-    }
-
     // see DbFile.java for javadocs
-    public DbFileIterator iterator(TransactionId tid){
-        return new HeapFileIterator(tid, this);
-    }
+    public DbFileIterator iterator(TransactionId tid) {
+        // some code goes here
+	class iteration implements DbFileIterator{
 
-    public class HeapFileIterator implements DbFileIterator {
-	private TransactionId tid;
-	private HeapFile heapFile;
-	private Iterator<Tuple> iterator;
-	private boolean open;
-
-	public HeapFileIterator(TransactionId tid, HeapFile heapFile) {
-		this.tid = tid;
-		this.heapFile = heapFile;
-		open = false;
-	}
-
-	public void open() throws DbException, TransactionAbortedException {
-		if (open) {
-			throw new DbException("already open");
-		}
-		open = true;
-		iterator = heapFile.getTupleList(tid).iterator();
-	}
-	
-	public boolean hasNext() {
-		if (!open) {
+	    private int currentIndex;
+	    private HeapFile fl;
+	    private TransactionId transId;
+	    private Iterator<Tuple> iteration;
+	    
+	    public iteration(HeapFile thisFile, TransactionId tid){
+		currentIndex = 0;
+		fl = thisFile;
+		transId = tid;
+		iteration = null;
+	    }
+	    
+	    public void open() throws TransactionAbortedException, DbException{
+		HeapPageId hpgId = new HeapPageId(fl.getId(), this.currentIndex);
+		HeapPage hpg = ((HeapPage) (Database.getBufferPool()).getPage(this.transId, hpgId, Permissions.READ_ONLY));
+		iteration = hpg.iterator();
+	    }
+	    
+	    public boolean hasNext() throws TransactionAbortedException, DbException {
+		if (this.iteration != null){
+		    if (this.iteration.hasNext()){
+			return true;
+		    }
+		    else if (this.currentIndex < (fl.numPages() - 1)){
+			currentIndex++;
+			this.open();
+			return hasNext();
+		    }
+		    else {
 			return false;
+		    }
 		}
-		return iterator.hasNext();
-	}
-
-	public Tuple next() throws NoSuchElementException{
-		if (!open) {
-			throw new NoSuchElementException();
+		else {
+		    if (this.currentIndex < (fl.numPages() - 1)){
+			currentIndex++;
+			this.open();
+			return hasNext();  
+		    }
+		    else {
+			return false;
+		    }
 		}
-		return iterator.next();
-	}
+	    }
 	
-	public void rewind() throws DbException, TransactionAbortedException {
-		close();
-		open();
-	}
 
-	public void close() {
-		open = false;
-		iterator = null;
-	}
-	
+	    public Tuple next() throws TransactionAbortedException, DbException{
+		if (this.iteration == null){
+		    throw new NoSuchElementException();
+		}
+		else {
+		    Tuple temp = null;
+		    if (this.hasNext()){
+			temp = iteration.next(); 
+		    }
+		    return temp;
+		}
+	    }
+	    
+	    public void close(){
+		iteration = null;
+	    }
+
+	    public void rewind() throws TransactionAbortedException, DbException{
+		currentIndex = 0;
+		this.open();
+	    }
+
+
+            public void remove() {
+		throw new UnsupportedOperationException();
+            }
+	};
+
+	return new iteration(this, tid);
     }
 
 }

@@ -2,8 +2,6 @@ package simpledb;
 
 /** Unique identifier for HeapPage objects. */
 public class HeapPageId implements PageId {
-    private int tableId;
-    private int pgNo;
 
     /**
      * Constructor. Create a page id structure for a specific page of a
@@ -12,14 +10,20 @@ public class HeapPageId implements PageId {
      * @param tableId The table that is being referenced
      * @param pgNo The page number in that table.
      */
+
+    private int pageNumber;
+    private int tableIden;
+    
     public HeapPageId(int tableId, int pgNo) {
-        this.tableId = tableId;
-        this.pgNo = pgNo;
+        // some code goes here
+	pageNumber = pgNo;
+	tableIden = tableId;
     }
 
     /** @return the table associated with this PageId */
     public int getTableId() {
-        return tableId;
+        // some code goes here
+        return this.tableIden;
     }
 
     /**
@@ -27,7 +31,8 @@ public class HeapPageId implements PageId {
      *   this PageId
      */
     public int pageNumber() {
-        return pgNo;
+        // some code goes here
+        return this.pageNumber;
     }
 
     /**
@@ -37,8 +42,9 @@ public class HeapPageId implements PageId {
      * @see BufferPool
      */
     public int hashCode() {
-        return tableId + pgNo;
-        //throw new UnsupportedOperationException("implement this");
+        // some code goes here
+	int hashNumber = this.getTableId() + this.pageNumber();
+	return hashNumber;
     }
 
     /**
@@ -49,17 +55,18 @@ public class HeapPageId implements PageId {
      *   ids are the same)
      */
     public boolean equals(Object o) {
-        if (o == null || !(o instanceof HeapPageId)) {
+        // some code goes here
+	try {
+	    if ((this.pageNumber() == (((HeapPageId) o).pageNumber())) && (this.getTableId() == (((HeapPageId) o).getTableId()))){
+		return true;
+	    }
+	    else {
 		return false;
+	    }
 	}
-	HeapPageId other = (HeapPageId) o;
-	if (other.tableId != this.tableId) {
-		return false;
+	catch (Exception e){
+	    return false;
 	}
-	if (other.pgNo != this.pgNo) {
-		return false;
-	}
-	return true;
     }
 
     /**

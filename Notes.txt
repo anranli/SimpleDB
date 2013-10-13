@@ -1,0 +1,7 @@
+Notes:
+
+In Join.java, getJoinField1Name() says:
+	the field name of join field1. Should be quantified by
+     *       alias or table name
+
+What does quantified by alias or table name mean?
