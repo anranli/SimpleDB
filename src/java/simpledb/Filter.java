@@ -88,6 +88,7 @@ public class Filter extends Operator {
     public void setChildren(DbIterator[] children) {
         // some code goes here
         this.children[0] = children[0];
+        this.child = children[0];
     }
 
 }
