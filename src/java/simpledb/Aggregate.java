@@ -29,8 +29,21 @@ public class Aggregate extends Operator {
      * @param aop
      *            The aggregation operator to use
      */
+    DbIterator child;
+    int afield;
+    int gfield;
+    Aggregator.Op aop;
+    DbIterator iterator;
+    DbIterator[] children = new DbIterator[1];
+
     public Aggregate(DbIterator child, int afield, int gfield, Aggregator.Op aop) {
 	// some code goes here
+        this.child = child;
+        this.afield = afield;
+        this.gfield = gfield;
+        this.aop = aop;
+        this.iterator = null;
+        this.children[0] = child;
     }
 
     /**
@@ -40,7 +53,12 @@ public class Aggregate extends Operator {
      * */
     public int groupField() {
 	// some code goes here
-	return -1;
+	   if (this.gfield != -1){
+            return this.gfield;
+       }
+       else {
+            return simpledb.Aggregator.NO_GROUPING;
+       }
     }
 
     /**
@@ -50,7 +68,12 @@ public class Aggregate extends Operator {
      * */
     public String groupFieldName() {
 	// some code goes here
-	return null;
+        if (this.gfield != -1){
+            return this.child.getTupleDesc().getFieldName(this.gfield);
+       }
+       else {
+            return null;
+       }
     }
 
     /**
@@ -58,7 +81,7 @@ public class Aggregate extends Operator {
      * */
     public int aggregateField() {
 	// some code goes here
-	return -1;
+        return this.afield;
     }
 
     /**
@@ -67,7 +90,7 @@ public class Aggregate extends Operator {
      * */
     public String aggregateFieldName() {
 	// some code goes here
-	return null;
+        return this.child.getTupleDesc().getFieldName(this.afield);
     }
 
     /**
@@ -75,16 +98,29 @@ public class Aggregate extends Operator {
      * */
     public Aggregator.Op aggregateOp() {
 	// some code goes here
-	return null;
+	   return this.aop;
     }
 
     public static String nameOfAggregatorOp(Aggregator.Op aop) {
-	return aop.toString();
+	   return aop.toString();
     }
 
     public void open() throws NoSuchElementException, DbException,
 	    TransactionAbortedException {
-	// some code goes here
+    // some code goes here
+        super.open();
+        if (this.child.getTupleDesc().getFieldType(this.afield) == Type.STRING_TYPE){
+            StringAggregator temp = new StringAggregator(this.groupField(), Type.STRING_TYPE, this.aggregateField(), this.aggregateOp());
+            this.iterator = temp.iterator();
+        }
+        else if (this.child.getTupleDesc().getFieldType(this.afield) == Type.INT_TYPE){
+            IntegerAggregator temp = new IntegerAggregator(this.groupField(), Type.INT_TYPE, this.aggregateField(), this.aggregateOp());
+            this.iterator = temp.iterator();
+        }
+        else {
+            //throw an error if not one of these types
+        }
+        this.iterator.open();
     }
 
     /**
@@ -96,11 +132,24 @@ public class Aggregate extends Operator {
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
 	// some code goes here
-	return null;
+	   if (this.iterator != null){
+            if (this.iterator.hasNext()){
+                return iterator.next();
+            }
+            else {
+                return null;
+            }
+       }
+       else {
+        return null;
+       }
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
 	// some code goes here
+        if (this.iterator != null){
+            this.iterator.rewind();
+        }
     }
 
     /**
@@ -116,22 +165,32 @@ public class Aggregate extends Operator {
      */
     public TupleDesc getTupleDesc() {
 	// some code goes here
-	return null;
+        //assuming this is open
+        if (this.iterator != null){
+            return this.iterator.getTupleDesc();
+        }
+        else {
+            return null;
+        }
     }
 
     public void close() {
 	// some code goes here
+        super.close();
+        this.iterator.close();
     }
 
     @Override
     public DbIterator[] getChildren() {
 	// some code goes here
-	return null;
+	   return this.children;
     }
 
     @Override
     public void setChildren(DbIterator[] children) {
 	// some code goes here
+        this.children[0] = children[0];
+        this.child = children[0];
     }
     
 }
