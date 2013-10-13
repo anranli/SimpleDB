@@ -1,5 +1,7 @@
 package simpledb;
 
+import java.util.ArrayList;
+
 /**
  * Knows how to compute some aggregate over a set of IntFields.
  */
@@ -21,9 +23,30 @@ public class IntegerAggregator implements Aggregator {
      * @param what
      *            the aggregation operator
      */
+    int gbfield;
+    Type gbfieldtype;
+    int afield;
+    Op what;
+    TupleDesc tupleDesc;
+    ArrayList<Tuple> list;
 
     public IntegerAggregator(int gbfield, Type gbfieldtype, int afield, Op what) {
         // some code goes here
+    	this.gbfield = gbfield;
+    	this.gbfieldtype = gbfieldtype;
+    	this.afield = afield;
+    	this.what = what;
+    	
+    	if (gbfield == Aggregator.NO_GROUPING) {
+    		Type[] typeArray = {gbfieldtype, Type.INT_TYPE};
+    		this.tupleDesc = new TupleDesc(typeArray);
+    	}
+    	else {
+    		Type[] typeArray = {Type.INT_TYPE};
+    		this.tupleDesc = new TupleDesc(typeArray);
+    	}
+    	
+    	list = new ArrayList<Tuple>();
     }
 
     /**
@@ -36,6 +59,10 @@ public class IntegerAggregator implements Aggregator {
     public void mergeTupleIntoGroup(Tuple tup) {
         // some code goes here
     }
+    
+    public void minMerge(){
+    	
+    }
 
     /**
      * Create a DbIterator over group aggregate results.
@@ -47,8 +74,7 @@ public class IntegerAggregator implements Aggregator {
      */
     public DbIterator iterator() {
         // some code goes here
-        throw new
-        UnsupportedOperationException("please implement me for proj2");
+        return new TupleIterator(tupleDesc, list);
     }
 
 }
