@@ -1,11 +1,25 @@
 package simpledb;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import simpledb.Aggregator.Op;
+
 /**
  * Knows how to compute some aggregate over a set of StringFields.
  */
 public class StringAggregator implements Aggregator {
 
     private static final long serialVersionUID = 1L;
+    
+	int gbfield;
+	Type gbfieldtype;
+	int afield;
+	Op what;
+	TupleDesc tupleDesc;
+	ArrayList<Tuple> list;
+	HashMap<Integer, ArrayList<String>> counts;
+	TupleDesc sample;
 
     /**
      * Aggregate constructor
@@ -15,9 +29,34 @@ public class StringAggregator implements Aggregator {
      * @param what aggregation operator to use -- only supports COUNT
      * @throws IllegalArgumentException if what != COUNT
      */
-
     public StringAggregator(int gbfield, Type gbfieldtype, int afield, Op what) {
         // some code goes here
+    	this.gbfield = gbfield;
+		this.gbfieldtype = gbfieldtype;
+		this.afield = afield;
+		this.what = what;
+		
+		if (what != Aggregator.Op.COUNT) {
+			throw new IllegalArgumentException("StringAggregator can only use the COUNT Op");
+		}
+
+		if (gbfield != Aggregator.NO_GROUPING) {
+			Type[] typeArray = {gbfieldtype, Type.STRING_TYPE};
+			this.tupleDesc = new TupleDesc(typeArray);
+			
+			Type[] ta = {gbfieldtype, Type.INT_TYPE};
+			sample = new TupleDesc(ta);
+		}
+		else {
+			Type[] typeArray = {Type.STRING_TYPE};
+			this.tupleDesc = new TupleDesc(typeArray);
+			
+			Type[] ta = {Type.INT_TYPE};
+			sample = new TupleDesc(ta);
+		}
+
+		list = new ArrayList<Tuple>();
+		counts = new HashMap<Integer, ArrayList<String>>();
     }
 
     /**
@@ -26,7 +65,82 @@ public class StringAggregator implements Aggregator {
      */
     public void mergeTupleIntoGroup(Tuple tup) {
         // some code goes here
+    	if (!tupleDesc.equals(tup.getTupleDesc())){
+			return; //TODO throw error?
+		}
+
+		if (gbfield == Aggregator.NO_GROUPING){
+			if (list.size() == 0) {
+				IntField intField = new IntField(1);
+				Tuple toAdd = new Tuple(sample);
+				toAdd.setField(0, intField);
+				list.add(toAdd);
+				
+				StringField f = (StringField) tup.getField(0);
+				ArrayList<String> values = new ArrayList<String>();
+				values.add(f.getValue());
+				counts.put(-1, values);
+				return;
+			}
+			countMerge(tup);
+		}
+		else {
+			if (list.size() == 0) {
+				IntField intField = new IntField(1);
+				Tuple toAdd = new Tuple(sample);
+				toAdd.setField(0, tup.getField(0));
+				toAdd.setField(1, intField);
+				list.add(toAdd);
+				
+				IntField f1 = (IntField) tup.getField(0);
+				StringField f2 = (StringField) tup.getField(1);
+				
+				ArrayList<String> values = new ArrayList<String>();
+				values.add(f2.getValue());
+				counts.put(f1.getValue(), values);
+				
+				System.out.println(counts);
+				return;
+			}
+			countGroupMerge(tup);
+		}
     }
+    
+    public void countMerge(Tuple tup){
+		ArrayList<String> values = counts.get(-1);
+		
+		StringField fTemp = (StringField) tup.getField(0);
+		values.add(fTemp.getValue());
+		
+		IntField f = new IntField(values.size());
+		list.get(0).setField(0, f);
+	}
+    
+    public void countGroupMerge(Tuple tup){
+		for (int i = 0; i < list.size(); i++){
+			System.out.println("f1 " + list.get(i).getField(0));
+			if (list.get(i).getField(0).equals(tup.getField(0))){
+				
+				System.out.println("s " + counts);
+				IntField f1 = (IntField) list.get(i).getField(0);
+				ArrayList<String> values = counts.get(f1.getValue());
+				System.out.println("f2 " + f1);
+				System.out.println("v " + values);
+				
+				StringField fTemp = (StringField) tup.getField(1);
+				values.add(fTemp.getValue());
+				
+				IntField f2 = new IntField(values.size());
+				list.get(i).setField(1, f2);
+				return;
+			}
+		}
+		IntField intField = new IntField(1);
+		Tuple toAdd = new Tuple(sample);
+		toAdd.setField(0, tup.getField(0));
+		toAdd.setField(1, intField);
+		list.add(toAdd);
+	}
 
     /**
      * Create a DbIterator over group aggregate results.
@@ -38,7 +152,7 @@ public class StringAggregator implements Aggregator {
      */
     public DbIterator iterator() {
         // some code goes here
-        throw new UnsupportedOperationException("please implement me for proj2");
+    	return new TupleIterator(sample, list);
     }
 
 }
