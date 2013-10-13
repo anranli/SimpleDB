@@ -133,7 +133,7 @@ public class TestUtil {
         while (expected.hasNext()) {
             Tuple expectedTup = expected.next();
             matched = false;
-            actual.rewind();
+            //actual.rewind();
 
             while (actual.hasNext()) {
                 Tuple next = actual.next();
