@@ -24,13 +24,43 @@ public class Join extends Operator {
     DbIterator child1;
     DbIterator child2;
     DbIterator[] children = new DbIterator[2];
+    TupleIterator iterator;
     public Join(JoinPredicate p, DbIterator child1, DbIterator child2) {
         // some code goes here
         this.p = p;
         this.child1 = child1;
         this.child2 = child2;
         this.children[0] = child1;
-        this.children[1] = child2;
+        this.children[1] = child2;      
+    }
+
+    public TupleIterator tupleIterator() throws TransactionAbortedException, DbException {
+        ArrayList<Tuple> tuplist = new ArrayList<Tuple>();
+        while (this.child1.hasNext()){
+            Tuple tuple1 = this.child1.next();
+            while (this.child2.hasNext()){
+                Tuple tuple2 = this.child2.next();
+
+                if (this.getJoinPredicate().filter(tuple1, tuple2)){
+                    Tuple tupleFinal = new Tuple(this.getTupleDesc());
+                    Iterator fields = tuple1.fields();
+                    int i = 0;
+                    while (fields.hasNext()){
+                        tupleFinal.setField(i, (Field) fields.next());
+                        i++;
+                    }
+                    fields = tuple2.fields();
+                    while (fields.hasNext()){
+                        tupleFinal.setField(i, (Field) fields.next());
+                        i++;
+                    }
+                    tuplist.add(tupleFinal);
+                }
+            }
+            this.child2.rewind();
+        }
+
+        return new TupleIterator(this.getTupleDesc(), tuplist);
     }
 
     public JoinPredicate getJoinPredicate() {
@@ -69,23 +99,23 @@ public class Join extends Operator {
 
     public void open() throws DbException, NoSuchElementException,
             TransactionAbortedException {
-        this.child1.open();
-        this.child2.open();
         super.open();
+        this.iterator = this.tupleIterator();
+        this.iterator.open();
         // some code goes here
     }
 
     public void close() {
-        this.child1.close();
-        this.child2.close();
         super.close();
+        this.iterator.close();
         // some code goes here
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
         // some code goes here
-        this.child1.rewind();
-        this.child2.rewind();
+        if (this.iterator != null){
+            this.iterator.rewind();
+        }
     }
 
     /**
@@ -108,32 +138,17 @@ public class Join extends Operator {
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // some code goes here
-        while (this.child1.hasNext()){
-            Tuple tuple1 = this.child1.next();
-            while (this.child2.hasNext()){
-                Tuple tuple2 = this.child2.next();
-                System.out.println(tuple1.toString());
-                System.out.println(tuple2.toString());
-                System.out.println(this.getJoinPredicate().getOperator());
-                System.out.println(this.getJoinPredicate().filter(tuple1, tuple2));
-                if (this.getJoinPredicate().filter(tuple1, tuple2)){
-                    Tuple joined = new Tuple(this.getTupleDesc());
-                    Iterator fields = tuple1.fields();
-                    int i = 0;
-                    while (fields.hasNext()){
-                        joined.setField(i, (Field) fields.next());
-                        i++;
-                    }
-                    fields = tuple2.fields();
-                    while (fields.hasNext()){
-                        joined.setField(i, (Field) fields.next());
-                        i++;
-                    }
-                    return joined;
-                }
+        if (this.iterator != null){
+            if (this.iterator.hasNext()){
+                return this.iterator.next();
+            }
+            else {
+                return null;
             }
         }
-        return null;
+        else {
+            return null;
+        }
     }
 
     @Override
