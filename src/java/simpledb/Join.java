@@ -31,11 +31,14 @@ public class Join extends Operator {
         this.child1 = child1;
         this.child2 = child2;
         this.children[0] = child1;
-        this.children[1] = child2;      
+        this.children[1] = child2;
+        this.iterator = null;      
     }
 
     public TupleIterator tupleIterator() throws TransactionAbortedException, DbException {
         ArrayList<Tuple> tuplist = new ArrayList<Tuple>();
+        this.child1.open();
+        this.child2.open();
         while (this.child1.hasNext()){
             Tuple tuple1 = this.child1.next();
             while (this.child2.hasNext()){
@@ -59,6 +62,8 @@ public class Join extends Operator {
             }
             this.child2.rewind();
         }
+        this.child1.close();
+        this.child2.close();
 
         return new TupleIterator(this.getTupleDesc(), tuplist);
     }
@@ -100,14 +105,18 @@ public class Join extends Operator {
     public void open() throws DbException, NoSuchElementException,
             TransactionAbortedException {
         super.open();
-        this.iterator = this.tupleIterator();
-        this.iterator.open();
+        if (this.iterator == null){
+            this.iterator = this.tupleIterator();
+            this.iterator.open();
+        }
         // some code goes here
     }
 
     public void close() {
         super.close();
-        this.iterator.close();
+        if (this.iterator == null){
+            this.iterator.close();
+        }
         // some code goes here
     }
 
