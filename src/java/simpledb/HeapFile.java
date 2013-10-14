@@ -98,9 +98,18 @@ public class HeapFile implements DbFile {
     }
 
     // see DbFile.java for javadocs
+    /**
+    * @param tid The transaction performing the update
+    * @param t The tuple to add.  This tuple should be updated to reflect that
+    *          it is now stored in this file.
+    * @return An ArrayList contain the pages that were modified
+    * @throws DbException if the tuple cannot be added
+    * @throws IOException if the needed file can't be read/written
+    **/
     public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
         // some code goes here
+
         return null;
         // not necessary for proj1
     }

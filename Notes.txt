@@ -5,3 +5,6 @@ In Join.java, getJoinField1Name() says:
      *       alias or table name
 
 What does quantified by alias or table name mean?
+
+In HeapPage:
+Mark page as dirty is not specified in the documentation, but the documentation also says that we should implement all of the shit not completed in the first project, which would mean yes, mark page as dirty.
