@@ -32,8 +32,8 @@ public class BufferPool {
 
     public BufferPool(int numPages) {
         // some code goes here
-	maxPages = numPages;
-	buffPool = new HashMap<PageId, Page>();
+    maxPages = numPages;
+    buffPool = new HashMap<PageId, Page>();
     }
 
     /**
@@ -54,17 +54,17 @@ public class BufferPool {
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
         // some code goes here
-	//For this project tid and perm aren't important
-	
-    	if (!(this.buffPool.containsKey(pid))){
-    	    if (this.buffPool.size() >= this.maxPages){
-    		  throw new DbException("Too many pages");
-    	    }
-    	    else {
-        	    Page pg = (Database.getCatalog()).getDbFile(pid.getTableId()).readPage(pid); 
+    //For this project tid and perm aren't important
+    
+        if (!(this.buffPool.containsKey(pid))){
+            if (this.buffPool.size() >= this.maxPages){
+              throw new DbException("Too many pages");
+            }
+            else {
+                Page pg = (Database.getCatalog()).getDbFile(pid.getTableId()).readPage(pid); 
                 if (pg != null){
-        	       this.buffPool.put(pid, pg);
-        	       return pg;
+                   this.buffPool.put(pid, pg);
+                   return pg;
                 }
                 else{
                     try {
@@ -77,11 +77,11 @@ public class BufferPool {
                         return null;
                     }
                 }
-    	    }
-    	}
-    	else {
-    	    return this.buffPool.get(pid);
-    	}
+            }
+        }
+        else {
+            return this.buffPool.get(pid);
+        }
     }
 
     /**
@@ -149,7 +149,7 @@ public class BufferPool {
         ArrayList<Page> pageList = (Database.getCatalog()).getDbFile(tableId).insertTuple(tid, t);
         Page pg = pageList.get(0);
         pg.markDirty(true, tid);
-        //this.buffPool.put(pg.getId(), pg);
+        this.buffPool.put(pg.getId(), pg);
     }
 
     /**
@@ -191,8 +191,8 @@ public class BufferPool {
     */
     public synchronized void discardPage(PageId pid) {
         // some code goes here
-	//not necessary for proj1
-	this.buffPool.remove(pid);
+    //not necessary for proj1
+    this.buffPool.remove(pid);
     }
 
     /**
