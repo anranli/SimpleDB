@@ -63,6 +63,8 @@ public class BufferPool {
 	    else {
 		Page pg = (Database.getCatalog()).getDbFile(pid.getTableId()).readPage(pid);
 		this.buffPool.put(pid, pg);
+        System.out.println("Here");
+        System.out.println(pg);
 		return pg;
 	    }
 	}

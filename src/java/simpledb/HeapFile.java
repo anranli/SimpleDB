@@ -24,11 +24,13 @@ public class HeapFile implements DbFile {
      */
     private File file;
     private TupleDesc tupleDesc;
+    int inserted_pages;
 
     public HeapFile(File f, TupleDesc td) {
         // some code goes here
 	file = f;
 	tupleDesc = td;
+	inserted_pages = 0;
     }
 
     /**
@@ -94,7 +96,7 @@ public class HeapFile implements DbFile {
     public int numPages() {
         // some code goes here
 	
-        return (int) (this.file.length())/(BufferPool.PAGE_SIZE);
+        return (int) (this.file.length())/(BufferPool.PAGE_SIZE) + this.inserted_pages;
     }
 
     // see DbFile.java for javadocs
@@ -109,9 +111,31 @@ public class HeapFile implements DbFile {
     public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
         // some code goes here
-
-        return null;
-        // not necessary for proj1
+        ArrayList<Page> modified_pages = new ArrayList<Page>();
+        boolean added = false;
+        for (int i = 0; i < this.numPages(); i++){
+        	HeapPageId hpgId = new HeapPageId(this.getId(), i);
+        	HeapPage hpg = ((HeapPage) (Database.getBufferPool()).getPage(tid, hpgId, Permissions.READ_WRITE));
+        	if (hpg.getNumEmptySlots() > 0) {
+        		added = true;
+        		hpg.insertTuple(t);
+                hpg.markDirty(true, tid);
+        		this.inserted_pages += 1;
+        		modified_pages.add(hpg);
+        		break;
+        	}
+        }
+        if (!added) {
+        	int index = this.numPages();
+        	HeapPageId hpgId = new HeapPageId(this.getId(), index);
+        	byte[] data = HeapPage.createEmptyPageData();
+            HeapPage hpg = new HeapPage(hpgId, data); 
+        	hpg.insertTuple(t);
+            hpg.markDirty(true, tid);
+        	this.inserted_pages += 1;
+        	modified_pages.add(hpg);
+        }
+        return modified_pages;
     }
 
     // see DbFile.java for javadocs
