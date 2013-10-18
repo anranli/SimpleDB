@@ -56,19 +56,32 @@ public class BufferPool {
         // some code goes here
 	//For this project tid and perm aren't important
 	
-	if (!(this.buffPool.containsKey(pid))){
-	    if (this.buffPool.size() >= this.maxPages){
-		throw new DbException("Too many pages");
-	    }
-	    else {
-		Page pg = (Database.getCatalog()).getDbFile(pid.getTableId()).readPage(pid);
-		this.buffPool.put(pid, pg);
-		return pg;
-	    }
-	}
-	else {
-	    return this.buffPool.get(pid);
-	}
+    	if (!(this.buffPool.containsKey(pid))){
+    	    if (this.buffPool.size() >= this.maxPages){
+    		  throw new DbException("Too many pages");
+    	    }
+    	    else {
+        	    Page pg = (Database.getCatalog()).getDbFile(pid.getTableId()).readPage(pid); 
+                if (pg != null){
+        	       this.buffPool.put(pid, pg);
+        	       return pg;
+                }
+                else{
+                    try {
+                        byte[] data = HeapPage.createEmptyPageData();
+                        HeapPage hpg = new HeapPage((HeapPageId) pid, data); 
+                        this.buffPool.put(pid, hpg);
+                        return hpg;
+                    }
+                    catch (IOException io){
+                        return null;
+                    }
+                }
+    	    }
+    	}
+    	else {
+    	    return this.buffPool.get(pid);
+    	}
     }
 
     /**
@@ -136,7 +149,7 @@ public class BufferPool {
         ArrayList<Page> pageList = (Database.getCatalog()).getDbFile(tableId).insertTuple(tid, t);
         Page pg = pageList.get(0);
         pg.markDirty(true, tid);
-        this.buffPool.put(tableId, pg);
+        //this.buffPool.put(pg.getId(), pg);
     }
 
     /**
@@ -156,8 +169,7 @@ public class BufferPool {
         throws DbException, TransactionAbortedException {
         // some code goes here
         // not necessary for proj1
-        ArrayList<Page> pageList = (Database.getCatalog()).getDbFile(tableId).deleteTuple(tid, t);
-        Page pg = pageList.get(0);
+        Page pg = (Database.getCatalog()).getDbFile(t.getRecordId().getPageId().getTableId()).deleteTuple(tid, t);
         pg.markDirty(true, tid);
     }
 

@@ -112,7 +112,6 @@ public class Catalog {
     public DbFile getDbFile(int tableid) throws NoSuchElementException {
         // some code goes here
 	if (this.filesIdMap.containsKey(tableid)){
-        System.out.println(this.filesIdMap.get(tableid));
 	    return this.filesIdMap.get(tableid);
 	}
 	else {
