@@ -119,8 +119,6 @@ public class HeapFile implements DbFile {
         	if (hpg.getNumEmptySlots() > 0) {
         		added = true;
         		hpg.insertTuple(t);
-                hpg.markDirty(true, tid);
-        		this.inserted_pages += 1;
         		modified_pages.add(hpg);
         		break;
         	}
@@ -128,10 +126,10 @@ public class HeapFile implements DbFile {
         if (!added) {
         	int index = this.numPages();
         	HeapPageId hpgId = new HeapPageId(this.getId(), index);
-        	byte[] data = HeapPage.createEmptyPageData();
-            HeapPage hpg = new HeapPage(hpgId, data); 
+            HeapPage hpg = ((HeapPage) (Database.getBufferPool()).getPage(tid, hpgId, Permissions.READ_WRITE));
+        	//byte[] data = HeapPage.createEmptyPageData();
+            //HeapPage hpg = new HeapPage(hpgId, data); 
         	hpg.insertTuple(t);
-            hpg.markDirty(true, tid);
         	this.inserted_pages += 1;
         	modified_pages.add(hpg);
         }
@@ -142,7 +140,15 @@ public class HeapFile implements DbFile {
     public Page deleteTuple(TransactionId tid, Tuple t) throws DbException,
             TransactionAbortedException {
         // some code goes here
-        return null;
+        //Implementation note: you will need to generate this tableid 
+        if (t.getRecordId().getPageId().getTableId() == this.getId()) {
+            HeapPage hpg = ((HeapPage) (Database.getBufferPool()).getPage(tid, t.getRecordId().getPageId(), Permissions.READ_WRITE));
+            hpg.deleteTuple(t);
+            return hpg;
+        }
+        else {
+            throw new DbException("tuple not in this file");
+        }
         // not necessary for proj1
     }
 

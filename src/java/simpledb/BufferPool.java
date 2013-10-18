@@ -63,8 +63,6 @@ public class BufferPool {
 	    else {
 		Page pg = (Database.getCatalog()).getDbFile(pid.getTableId()).readPage(pid);
 		this.buffPool.put(pid, pg);
-        System.out.println("Here");
-        System.out.println(pg);
 		return pg;
 	    }
 	}
@@ -135,6 +133,10 @@ public class BufferPool {
         throws DbException, IOException, TransactionAbortedException {
         // some code goes here
         // not necessary for proj1
+        ArrayList<Page> pageList = (Database.getCatalog()).getDbFile(tableId).insertTuple(tid, t);
+        Page pg = pageList.get(0);
+        pg.markDirty(true, tid);
+        this.buffPool.put(tableId, pg);
     }
 
     /**
@@ -154,6 +156,9 @@ public class BufferPool {
         throws DbException, TransactionAbortedException {
         // some code goes here
         // not necessary for proj1
+        ArrayList<Page> pageList = (Database.getCatalog()).getDbFile(tableId).deleteTuple(tid, t);
+        Page pg = pageList.get(0);
+        pg.markDirty(true, tid);
     }
 
     /**
