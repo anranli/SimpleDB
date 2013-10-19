@@ -88,6 +88,10 @@ public class HeapFile implements DbFile {
     public void writePage(Page page) throws IOException {
         // some code goes here
         // not necessary for proj1
+        RandomAccessFile randAccessFile = new RandomAccessFile(this.file, "rwd");
+        randAccessFile.skipBytes(page.getId().pageNumber()*BufferPool.PAGE_SIZE);
+        randAccessFile.write(page.getPageData());
+        randAccessFile.close();
     }
 
     /**
