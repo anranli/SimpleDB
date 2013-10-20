@@ -62,6 +62,7 @@ public class IntegerAggregator implements Aggregator {
 	public void mergeTupleIntoGroup(Tuple tup) {
 		// some code goes here
 		if (!tupleDesc.equals(tup.getTupleDesc())){
+			System.out.println("TupleDesc does not match");
 			return; //TODO throw error?
 		}
 
@@ -137,7 +138,7 @@ public class IntegerAggregator implements Aggregator {
 	}
 
 	public void avgMerge(Tuple tup){
-		ArrayList<Integer> values = counts.get(Aggregator.NO_GROUPING);
+		ArrayList<Integer> values = counts.get(new IntField(Aggregator.NO_GROUPING));
 		
 		IntField fTemp = (IntField) tup.getField(afield);
 		values.add(fTemp.getValue());
@@ -153,7 +154,7 @@ public class IntegerAggregator implements Aggregator {
 	}
 
 	public void countMerge(Tuple tup){
-		ArrayList<Integer> values = counts.get(Aggregator.NO_GROUPING);
+		ArrayList<Integer> values = counts.get(new IntField(Aggregator.NO_GROUPING));
 		
 		IntField fTemp = (IntField) tup.getField(afield);
 		values.add(fTemp.getValue());

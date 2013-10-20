@@ -66,6 +66,7 @@ public class StringAggregator implements Aggregator {
     public void mergeTupleIntoGroup(Tuple tup) {
         // some code goes here
     	if (!tupleDesc.equals(tup.getTupleDesc())){
+    		System.out.println("TupleDesc does not match");
 			return; //TODO throw error?
 		}
 
@@ -105,7 +106,7 @@ public class StringAggregator implements Aggregator {
     }
     
     public void countMerge(Tuple tup){
-		ArrayList<String> values = counts.get(Aggregator.NO_GROUPING);
+		ArrayList<String> values = counts.get(new IntField(Aggregator.NO_GROUPING));
 		
 		StringField fTemp = (StringField) tup.getField(afield);
 		values.add(fTemp.getValue());
