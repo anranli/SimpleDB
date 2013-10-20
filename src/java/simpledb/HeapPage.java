@@ -19,7 +19,7 @@ public class HeapPage implements Page {
     Tuple tuples[];
     int numSlots;
 
-    Boolean dirty;
+    Boolean dirty = false;
     TransactionId tid;
 
     byte[] oldData;

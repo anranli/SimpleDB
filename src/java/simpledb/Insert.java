@@ -40,7 +40,7 @@ public class Insert extends Operator {
             this.child = child;
             this.tableid = tableid;
             this.children[0] = child;
-            this.called_times = 0;
+            this.called_times = -1;
 
             //TupleDesc for some reason is based on output tuples, so have to declare tuple up here instead in fetchNext()
             //This would have been real nice if they explained this or pointed towards Operator.java
@@ -64,15 +64,17 @@ public class Insert extends Operator {
 
     public void open() throws DbException, TransactionAbortedException {
         // some code goes here
+        super.open();
         this.child.open();
         this.called_times = 0;
     }
 
     public void close() {
         // some code goes here
+        super.close();
         this.child.close();
         //perhaps this is wrong
-        this.called_times = 0;
+        this.called_times = -1;
     }
 
     public void rewind() throws DbException, TransactionAbortedException {

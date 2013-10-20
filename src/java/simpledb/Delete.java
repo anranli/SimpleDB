@@ -46,12 +46,14 @@ public class Delete extends Operator {
 
     public void open() throws DbException, TransactionAbortedException {
         // some code goes here
+        super.open();
         this.child.open();
         this.called_times = 0;
     }
 
     public void close() {
         // some code goes here
+        super.close();
         this.child.close();
         this.called_times = 0;
     }
