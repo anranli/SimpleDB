@@ -29,11 +29,13 @@ public class BufferPool {
      */
     private HashMap<PageId, Page> buffPool;
     private int maxPages;
+    private ArrayList<PageId> lruList;
 
     public BufferPool(int numPages) {
         // some code goes here
-	maxPages = numPages;
-	buffPool = new HashMap<PageId, Page>();
+        maxPages = numPages;
+        buffPool = new HashMap<PageId, Page>();
+        lruList = new ArrayList<PageId>();
     }
 
     /**
@@ -54,21 +56,39 @@ public class BufferPool {
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
         // some code goes here
-	//For this project tid and perm aren't important
-	
-	if (!(this.buffPool.containsKey(pid))){
-	    if (this.buffPool.size() >= this.maxPages){
-		throw new DbException("Too many pages");
-	    }
-	    else {
-		Page pg = (Database.getCatalog()).getDbFile(pid.getTableId()).readPage(pid);
-		this.buffPool.put(pid, pg);
-		return pg;
-	    }
-	}
-	else {
-	    return this.buffPool.get(pid);
-	}
+    //For this project tid and perm aren't important
+    
+        if (!(this.buffPool.containsKey(pid))){
+            if (this.buffPool.size() >= this.maxPages){
+                this.evictPage();
+                return this.getPage(tid, pid, perm);
+              //throw new DbException("Too many pages");
+            }
+            else {
+                Page pg = (Database.getCatalog()).getDbFile(pid.getTableId()).readPage(pid); 
+                if (pg != null){
+                   this.buffPool.put(pid, pg);
+                   this.lruTracking(pid);
+                   return pg;
+                }
+                else{
+                    try {
+                        byte[] data = HeapPage.createEmptyPageData();
+                        HeapPage hpg = new HeapPage((HeapPageId) pid, data); 
+                        this.buffPool.put(pid, hpg);
+                        this.lruTracking(pid);
+                        return hpg;
+                    }
+                    catch (IOException io){
+                        return null;
+                    }
+                }
+            }
+        }
+        else {
+            this.lruTracking(pid);
+            return this.buffPool.get(pid);
+        }
     }
 
     /**
@@ -133,6 +153,11 @@ public class BufferPool {
         throws DbException, IOException, TransactionAbortedException {
         // some code goes here
         // not necessary for proj1
+        ArrayList<Page> pageList = (Database.getCatalog()).getDbFile(tableId).insertTuple(tid, t);
+        Page pg = pageList.get(0);
+        pg.markDirty(true, tid);
+        this.buffPool.put(pg.getId(), pg);
+        this.lruTracking(pg.getId());
     }
 
     /**
@@ -152,6 +177,9 @@ public class BufferPool {
         throws DbException, TransactionAbortedException {
         // some code goes here
         // not necessary for proj1
+        Page pg = (Database.getCatalog()).getDbFile(t.getRecordId().getPageId().getTableId()).deleteTuple(tid, t);
+        pg.markDirty(true, tid);
+        this.lruTracking(pg.getId());
     }
 
     /**
@@ -172,8 +200,8 @@ public class BufferPool {
     */
     public synchronized void discardPage(PageId pid) {
         // some code goes here
-	//not necessary for proj1
-	this.buffPool.remove(pid);
+    //not necessary for proj1
+    this.buffPool.remove(pid);
     }
 
     /**
@@ -183,6 +211,10 @@ public class BufferPool {
     private synchronized  void flushPage(PageId pid) throws IOException {
         // some code goes here
         // not necessary for proj1
+        DbFile dbf = (Database.getCatalog()).getDbFile(pid.getTableId());
+        if ((dbf.readPage(pid)).isDirty() != null) {
+            dbf.writePage(dbf.readPage(pid));
+        }
     }
 
     /** Write all pages of the specified transaction to disk.
@@ -199,6 +231,27 @@ public class BufferPool {
     private synchronized  void evictPage() throws DbException {
         // some code goes here
         // not necessary for proj1
+        PageId pid = this.lruList.get(0);
+        if (pid.equals(this.buffPool.get(pid).getId())){
+            try {
+                this.flushPage(pid);
+                this.buffPool.remove(pid); 
+                this.lruList.remove(0);
+            }
+            catch (IOException io){
+                throw new DbException("Could not flush page");
+            }
+        }
+
+    }
+
+    /**
+     * Maintains a list from least recent to most recent pages used, modified, etc.
+     * Will remove earlier instances and play all new ones at the end of the list.
+     **/
+    private void lruTracking(PageId pid) {
+        while (this.lruList.remove(pid)){};
+        this.lruList.add(pid);
     }
 
 }

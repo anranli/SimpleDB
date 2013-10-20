@@ -5,3 +5,18 @@ In Join.java, getJoinField1Name() says:
      *       alias or table name
 
 What does quantified by alias or table name mean?
+
+In HeapPage:
+Mark page as dirty is not specified in the documentation, but the documentation also says that we should implement all of the shit not completed in the first project, which would mean yes, mark page as dirty.
+
+Fetch(), can we assume that it wont be called if closed
+
+Changed Insert.java to import 
+import java.io.*;
+import java.util.*;
+
+for the purpose of catching IOException potentially getting thrown
+
+also added in insert.java and delete.java:
+import java.io.*;
+import java.util.*;
