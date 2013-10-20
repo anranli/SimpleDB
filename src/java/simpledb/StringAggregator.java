@@ -18,7 +18,7 @@ public class StringAggregator implements Aggregator {
 	Op what;
 	TupleDesc tupleDesc;
 	ArrayList<Tuple> list;
-	HashMap<Integer, ArrayList<String>> counts;
+	HashMap<Field, ArrayList<String>> counts;
 	TupleDesc sample;
 
     /**
@@ -56,7 +56,7 @@ public class StringAggregator implements Aggregator {
 		}
 
 		list = new ArrayList<Tuple>();
-		counts = new HashMap<Integer, ArrayList<String>>();
+		counts = new HashMap<Field, ArrayList<String>>();
     }
 
     /**
@@ -73,13 +73,13 @@ public class StringAggregator implements Aggregator {
 			if (list.size() == 0) {
 				IntField intField = new IntField(1);
 				Tuple toAdd = new Tuple(sample);
-				toAdd.setField(0, intField);
+				toAdd.setField(afield, intField);
 				list.add(toAdd);
 				
-				StringField f = (StringField) tup.getField(0);
+				StringField f = (StringField) tup.getField(afield);
 				ArrayList<String> values = new ArrayList<String>();
 				values.add(f.getValue());
-				counts.put(-1, values);
+				counts.put(new IntField(Aggregator.NO_GROUPING), values);
 				return;
 			}
 			countMerge(tup);
@@ -88,18 +88,16 @@ public class StringAggregator implements Aggregator {
 			if (list.size() == 0) {
 				IntField intField = new IntField(1);
 				Tuple toAdd = new Tuple(sample);
-				toAdd.setField(0, tup.getField(0));
-				toAdd.setField(1, intField);
+				toAdd.setField(gbfield, tup.getField(gbfield));
+				toAdd.setField(afield, intField);
 				list.add(toAdd);
 				
-				IntField f1 = (IntField) tup.getField(0);
-				StringField f2 = (StringField) tup.getField(1);
+				Field f1 = tup.getField(gbfield);
+				StringField f2 = (StringField) tup.getField(afield);
 				
 				ArrayList<String> values = new ArrayList<String>();
 				values.add(f2.getValue());
-				counts.put(f1.getValue(), values);
-				
-				System.out.println(counts);
+				counts.put(f1, values);
 				return;
 			}
 			countGroupMerge(tup);
@@ -107,31 +105,26 @@ public class StringAggregator implements Aggregator {
     }
     
     public void countMerge(Tuple tup){
-		ArrayList<String> values = counts.get(-1);
+		ArrayList<String> values = counts.get(Aggregator.NO_GROUPING);
 		
-		StringField fTemp = (StringField) tup.getField(0);
+		StringField fTemp = (StringField) tup.getField(afield);
 		values.add(fTemp.getValue());
 		
 		IntField f = new IntField(values.size());
-		list.get(0).setField(0, f);
+		list.get(0).setField(afield, f);
 	}
     
     public void countGroupMerge(Tuple tup){
 		for (int i = 0; i < list.size(); i++){
-			System.out.println("f1 " + list.get(i).getField(0));
-			if (list.get(i).getField(0).equals(tup.getField(0))){
+			if (list.get(i).getField(gbfield).equals(tup.getField(gbfield))){
+				Field f1 = list.get(i).getField(gbfield);
+				ArrayList<String> values = counts.get(f1);
 				
-				System.out.println("s " + counts);
-				IntField f1 = (IntField) list.get(i).getField(0);
-				ArrayList<String> values = counts.get(f1.getValue());
-				System.out.println("f2 " + f1);
-				System.out.println("v " + values);
-				
-				StringField fTemp = (StringField) tup.getField(1);
+				StringField fTemp = (StringField) tup.getField(afield);
 				values.add(fTemp.getValue());
 				
 				IntField f2 = new IntField(values.size());
-				list.get(i).setField(1, f2);
+				list.get(i).setField(afield, f2);
 				return;
 			}
 		}
@@ -140,6 +133,13 @@ public class StringAggregator implements Aggregator {
 		toAdd.setField(0, tup.getField(0));
 		toAdd.setField(1, intField);
 		list.add(toAdd);
+		
+		Field f1 = tup.getField(gbfield);
+		StringField f2 = (StringField) tup.getField(afield);
+		
+		ArrayList<String> values = new ArrayList<String>();
+		values.add(f2.getValue());
+		counts.put(f1, values);
 	}
 
     /**
