@@ -21,11 +21,11 @@ public class Delete extends Operator {
      *            The child operator from which to read tuples for deletion
      */
 
-    TransactionId t;
-    DbIterator child;
-    DbIterator[] children = new DbIterator[1];
-    int called_times;
-    Tuple output;
+    private TransactionId t;
+    private DbIterator child;
+    private DbIterator[] children = new DbIterator[1];
+    private int called_times;
+    private Tuple output;
 
     public Delete(TransactionId t, DbIterator child) {
         // some code goes here

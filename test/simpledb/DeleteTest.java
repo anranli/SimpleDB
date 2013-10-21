@@ -11,7 +11,7 @@ import junit.framework.JUnit4TestAdapter;
  * We reserve more heavy-duty insertion testing for HeapFile and HeapPage.
  * This suite is superficial.
  */
-public class InsertTest extends TestUtil.CreateHeapFile {
+public class DeleteTest extends TestUtil.CreateHeapFile {
 
   private DbIterator scan1;
   private DbIterator scan2;
@@ -30,6 +30,14 @@ public class InsertTest extends TestUtil.CreateHeapFile {
       temp[i] = i;
     }
 
+    int[] temp2 = new int[2500];
+    for (int i = 0; i < 2500; i++){
+      temp[i] = i;
+    }
+    int[] temp3 = new int[2510];
+    for (int i = 2500; i < 5010; i++){
+      temp3[i - 2500] = i;
+    }
 
     this.scan1 = TestUtil.createTupleList(2, temp );
         // new int[] { 1, 2,
@@ -40,40 +48,24 @@ public class InsertTest extends TestUtil.CreateHeapFile {
         //             3, 6,
         //             5, 7,
         //             8, 4 });
-    tid = new TransactionId();
+    this.scan2 = TestUtil.createTupleList(2, temp2 );
+    this.scan3 = TestUtil.createTupleList(2, temp3 );
 
+    tid = new TransactionId();
+    tid2 = new TransactionId();
+    tid3 = new TransactionId();
   }
 
   /**
    * Unit test for Insert.getTupleDesc()
    */
   @Test public void getTupleDesc() throws Exception {
-    Insert op = new Insert(tid,scan1, empty.getId());
+    Delete op = new Delete(tid,scan1);
     TupleDesc expected = Utility.getTupleDesc(1);
     TupleDesc actual = op.getTupleDesc();
     assertEquals(expected, actual);
-
-    Delete op2 = new Delete(tid2,scan1);
-    TupleDesc expected2 = Utility.getTupleDesc(1);
-    TupleDesc actual2 = op2.getTupleDesc();
-    assertEquals(expected2, actual2);
   }
 
-  @Test public void DbException() throws Exception {
-    String[] temp2 = new String[5000];
-    for (int i = 0; i < 5000; i++){
-      temp2[i] = "A" + i;
-    }
-
-    DbIterator scan2 = TestUtil.createTupleList(2, temp2 );
-    try {
-      Insert op = new Insert(tid,scan2, empty.getId());
-      throw new Exception();
-    }
-    catch (DbException db){
-
-    }
-  }
 
   @Test public void fetchNext() throws Exception {
     Insert op = new Insert(tid,scan1, empty.getId());
@@ -81,14 +73,19 @@ public class InsertTest extends TestUtil.CreateHeapFile {
     assertEquals(new IntField(2500), op.fetchNext().getField(0));
     assertEquals(null, op.fetchNext());
 
-    Delete op2 = new Delete(tid2,scan1);
+    Delete op2 = new Delete(tid2,scan2);
     op2.open();
-    assertEquals(new IntField(2500), op2.fetchNext().getField(0));
+    assertEquals(new IntField(1250), op2.fetchNext().getField(0));
     assertEquals(null, op2.fetchNext());
+
+    Delete op3 = new Delete(tid3,scan3);
+    op3.open();
+    assertEquals(new IntField(1250), op3.fetchNext().getField(0));
+    assertEquals(null, op3.fetchNext());
   }
 
   @Test public void children() throws Exception {
-    Insert op = new Insert(tid,scan1, empty.getId());
+    Delete op = new Delete(tid,scan1);
     DbIterator scan2 = TestUtil.createTupleList(2,
         new int[] { 1, 2,
                     1, 4,

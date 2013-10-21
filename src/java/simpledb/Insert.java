@@ -25,12 +25,12 @@ public class Insert extends Operator {
      *             insert.
      */
 
-    TransactionId t;
-    DbIterator child;
-    int tableid;
-    DbIterator[] children = new DbIterator[1];
-    int called_times;
-    Tuple output;
+    private TransactionId t;
+    private DbIterator child;
+    private int tableid;
+    private DbIterator[] children = new DbIterator[1];
+    private int called_times;
+    private Tuple output;
 
     public Insert(TransactionId t, DbIterator child, int tableid)
             throws DbException {
@@ -40,7 +40,7 @@ public class Insert extends Operator {
             this.child = child;
             this.tableid = tableid;
             this.children[0] = child;
-            this.called_times = -1;
+            this.called_times = 0;
 
             //TupleDesc for some reason is based on output tuples, so have to declare tuple up here instead in fetchNext()
             //This would have been real nice if they explained this or pointed towards Operator.java
@@ -74,7 +74,7 @@ public class Insert extends Operator {
         super.close();
         this.child.close();
         //perhaps this is wrong
-        this.called_times = -1;
+        this.called_times = 0;
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
