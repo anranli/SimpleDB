@@ -68,12 +68,16 @@ public class IntegerAggregator implements Aggregator {
 
 		if (gbfield == Aggregator.NO_GROUPING){
 			if (list.size() == 0) {
-				list.add(tup);
 				IntField f = (IntField) tup.getField(afield);
 				
 				ArrayList<Integer> values = new ArrayList<Integer>();
 				values.add(f.getValue());
 				counts.put(new IntField(Aggregator.NO_GROUPING), values);
+				
+				if (what == Op.COUNT) {
+					tup.setField(afield, new IntField(1));
+				}
+				list.add(tup);
 				return;
 			}
 			switch (what) {
@@ -91,14 +95,17 @@ public class IntegerAggregator implements Aggregator {
 		}
 		else {
 			if (list.size() == 0) {
-				list.add(tup);
-				
 				Field f1 = tup.getField(gbfield);
 				IntField f2 = (IntField) tup.getField(afield);
 				
 				ArrayList<Integer> values = new ArrayList<Integer>();
 				values.add(f2.getValue());
 				counts.put(f1, values);
+				
+				if (what == Op.COUNT) {
+					tup.setField(afield, new IntField(1));
+				}
+				list.add(tup);
 				return;
 			}
 			switch (what) {
@@ -246,15 +253,15 @@ public class IntegerAggregator implements Aggregator {
 				return;
 			}
 		}
-		tup.setField(afield, new IntField(1));
-		list.add(tup);
-		
 		Field f1 = tup.getField(gbfield);
 		IntField f2 = (IntField) tup.getField(afield);
 		
 		ArrayList<Integer> values = new ArrayList<Integer>();
 		values.add(f2.getValue());
 		counts.put(f1, values);
+		
+		tup.setField(afield, new IntField(1));
+		list.add(tup);
 	}
 
 	/**
