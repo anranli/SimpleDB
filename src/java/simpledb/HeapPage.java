@@ -19,7 +19,7 @@ public class HeapPage implements Page {
     Tuple tuples[];
     int numSlots;
 
-    Boolean dirty = false;
+    Boolean dirty;
     TransactionId tid;
 
     byte[] oldData;
@@ -44,6 +44,7 @@ public class HeapPage implements Page {
         this.pid = id;
         this.td = Database.getCatalog().getTupleDesc(id.getTableId());
         this.numSlots = getNumTuples();
+        this.dirty = false;
         DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data));
 
         // allocate and read the header slots of this page

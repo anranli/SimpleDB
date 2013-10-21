@@ -50,7 +50,7 @@ public class Insert extends Operator {
             this.output = new Tuple(tupleDesc);
         }
         else {
-            throw new DbException("TupleDesc of child differes from table into which we are to insert.");
+            throw new DbException("TupleDesc of child differs from table into which we are to insert.");
         }
     }
 

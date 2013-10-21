@@ -28,7 +28,8 @@ public class InsertTest extends TestUtil.CreateHeapFile {
                     3, 2,
                     3, 4,
                     3, 6,
-                    5, 7 });
+                    5, 7,
+                    7, 8 });
     tid = new TransactionId();
   }
 
@@ -53,7 +54,7 @@ public class InsertTest extends TestUtil.CreateHeapFile {
         op.next()));
 
     // we should fit on one page
-    assertEquals(1, empty.numPages());
+    assertEquals(2, empty.numPages());
   }
 
   /**
