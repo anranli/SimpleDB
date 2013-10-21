@@ -18,7 +18,6 @@ public class PredicateTest extends SimpleDbTestBase{
 
     for (int i : vals) {
       Predicate p = new Predicate(0, Predicate.Op.EQUALS, TestUtil.getField(i));
-      System.out.println(p.toString());
       assertFalse(p.filter(Utility.getHeapTuple(i - 1)));
       assertTrue(p.filter(Utility.getHeapTuple(i)));
       assertFalse(p.filter(Utility.getHeapTuple(i + 1)));

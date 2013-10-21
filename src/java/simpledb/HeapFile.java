@@ -75,7 +75,7 @@ public class HeapFile implements DbFile {
 	    byte[] byteArray = new byte[BufferPool.PAGE_SIZE];
 	    RandomAccessFile randAccessFile = new RandomAccessFile(this.file, "r");
 	    randAccessFile.skipBytes(pid.pageNumber()*BufferPool.PAGE_SIZE);
-	    randAccessFile.readFully(byteArray);
+	    randAccessFile.read(byteArray);
 	    randAccessFile.close();
 	    pg = new HeapPage((HeapPageId) pid, byteArray);
 	}
@@ -92,6 +92,7 @@ public class HeapFile implements DbFile {
         randAccessFile.skipBytes(page.getId().pageNumber()*BufferPool.PAGE_SIZE);
         randAccessFile.write(page.getPageData());
         randAccessFile.close();
+        page.markDirty(false, new TransactionId());
     }
 
     /**

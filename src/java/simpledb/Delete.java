@@ -24,7 +24,7 @@ public class Delete extends Operator {
     private TransactionId t;
     private DbIterator child;
     private DbIterator[] children = new DbIterator[1];
-    private int called_times;
+    private boolean called;
     private Tuple output;
 
     public Delete(TransactionId t, DbIterator child) {
@@ -37,6 +37,7 @@ public class Delete extends Operator {
         typeAr[0] = Type.INT_TYPE;
         TupleDesc tupleDesc = new TupleDesc(typeAr);
         this.output = new Tuple(tupleDesc);
+        this.called = false;
     }
 
     public TupleDesc getTupleDesc() {
@@ -48,20 +49,20 @@ public class Delete extends Operator {
         // some code goes here
         super.open();
         this.child.open();
-        this.called_times = 0;
+        this.called = false;
     }
 
     public void close() {
         // some code goes here
         super.close();
         this.child.close();
-        this.called_times = 0;
+        this.called = false;
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
         // some code goes here
         this.child.rewind();
-        this.called_times = 0;
+        this.called = false;
     }
 
     /**
@@ -76,7 +77,7 @@ public class Delete extends Operator {
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // some code goes here
 
-        if (this.called_times == 0){
+        if (this.called == false){
             //if we haven't called this before
             int counter = 0;
             while (this.child.hasNext()){
@@ -85,7 +86,7 @@ public class Delete extends Operator {
                 Database.getBufferPool().deleteTuple(tid, next);
                 counter++;
             }
-            called_times++;
+            this.called = true;
             IntField converted_counter = new IntField(counter);
             this.output.setField(0, converted_counter);
             return output;
