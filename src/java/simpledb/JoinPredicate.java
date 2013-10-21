@@ -24,9 +24,9 @@ public class JoinPredicate implements Serializable {
      *            Predicate.Op.LESS_THAN_OR_EQ
      * @see Predicate
      */
-    int field1;
-    Predicate.Op op;
-    int field2;
+    private int field1;
+    private Predicate.Op op;
+    private int field2;
     public JoinPredicate(int field1, Predicate.Op op, int field2) {
         // some code goes here
         this.field1 = field1;

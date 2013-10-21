@@ -19,9 +19,9 @@ public class Filter extends Operator {
      *            The child operator
      */
 
-    Predicate p;
-    DbIterator child;
-    DbIterator[] children = new DbIterator[1];
+    private Predicate p;
+    private DbIterator child;
+    private DbIterator[] children = new DbIterator[1];
     public Filter(Predicate p, DbIterator child) {
         // some code goes here
         this.p = p;

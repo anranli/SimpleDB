@@ -20,11 +20,11 @@ public class Join extends Operator {
      * @param child2
      *            Iterator for the right(inner) relation to join
      */
-    JoinPredicate p;
-    DbIterator child1;
-    DbIterator child2;
-    DbIterator[] children = new DbIterator[2];
-    TupleIterator iterator;
+    private JoinPredicate p;
+    private DbIterator child1;
+    private DbIterator child2;
+    private DbIterator[] children = new DbIterator[2];
+    private TupleIterator iterator;
     public Join(JoinPredicate p, DbIterator child1, DbIterator child2) {
         // some code goes here
         this.p = p;
@@ -35,7 +35,7 @@ public class Join extends Operator {
         this.iterator = null;      
     }
 
-    public TupleIterator tupleIterator() throws TransactionAbortedException, DbException {
+    private TupleIterator tupleIterator() throws TransactionAbortedException, DbException {
         ArrayList<Tuple> tuplist = new ArrayList<Tuple>();
         this.child1.open();
         this.child2.open();
