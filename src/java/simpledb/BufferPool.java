@@ -190,7 +190,9 @@ public class BufferPool {
     public synchronized void flushAllPages() throws IOException {
         // some code goes here
         // not necessary for proj1
-
+        for (int i = 0; i < this.lruList.size(); i++){
+            this.flushPage(this.lruList.get(i));
+        }
     }
 
     /** Remove the specific page id from the buffer pool.
