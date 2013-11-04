@@ -78,7 +78,11 @@ public class JoinOptimizer {
      * Estimate the cost of a join.
      * 
      * The cost of the join should be calculated based on the join algorithm (or
+<<<<<<< HEAD
      * algorithms) that you implemented for Project 2. It should be a function of
+=======
+     * algorithms) that you implemented for Lab 2. It should be a function of
+>>>>>>> 3320db877d03d7a951a257e4cfb5ce484d4887c3
      * the amount of data that must be read over the course of the query, as
      * well as the number of CPU opertions performed by your join. Assume that
      * the cost of a single predicate application is roughly 1.
@@ -104,6 +108,7 @@ public class JoinOptimizer {
             double cost1, double cost2) {
         if (j instanceof LogicalSubplanJoinNode) {
             // A LogicalSubplanJoinNode represents a subquery.
+<<<<<<< HEAD
             // You do not need to implement proper support for these for Project 3.
             return card1 + cost1 + cost2;
         } else {
@@ -111,6 +116,15 @@ public class JoinOptimizer {
             // HINT: You may need to use the variable "j" if you implemented
             // a join algorithm that's more complicated than a basic nested-loops
             // join.
+=======
+            // You do not need to implement proper support for these for Lab 4.
+            return card1 + cost1 + cost2;
+        } else {
+            // Insert your code here.
+            // HINT: You may need to use the variable "j" if you implemented
+            // a join algorithm that's more complicated than a basic
+            // nested-loops join.
+>>>>>>> 3320db877d03d7a951a257e4cfb5ce484d4887c3
             return -1.0;
         }
     }
@@ -138,7 +152,11 @@ public class JoinOptimizer {
             boolean t1pkey, boolean t2pkey, Map<String, TableStats> stats) {
         if (j instanceof LogicalSubplanJoinNode) {
             // A LogicalSubplanJoinNode represents a subquery.
+<<<<<<< HEAD
             // You do not need to implement proper support for these for Project 3.
+=======
+            // You do not need to implement proper support for these for Lab 4.
+>>>>>>> 3320db877d03d7a951a257e4cfb5ce484d4887c3
             return card1;
         } else {
             return estimateTableJoinCardinality(j.p, j.t1Alias, j.t2Alias,
@@ -146,6 +164,10 @@ public class JoinOptimizer {
                     stats, p.getTableAliasToIdMapping());
         }
     }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 3320db877d03d7a951a257e4cfb5ce484d4887c3
     /**
      * Estimate the join cardinality of two tables.
      * */
@@ -194,7 +216,11 @@ public class JoinOptimizer {
 
     /**
      * Compute a logical, reasonably efficient join on the specified tables. See
+<<<<<<< HEAD
      * project description for hints on how this should be implemented.
+=======
+     * PS4 for hints on how this should be implemented.
+>>>>>>> 3320db877d03d7a951a257e4cfb5ce484d4887c3
      * 
      * @param stats
      *            Statistics for each table involved in the join, referenced by
@@ -216,9 +242,13 @@ public class JoinOptimizer {
             HashMap<String, TableStats> stats,
             HashMap<String, Double> filterSelectivities, boolean explain)
             throws ParsingException {
+<<<<<<< HEAD
 
         // See the project writeup for some hints as to how this function
         // should work.
+=======
+        //Not necessary for projs 1--3
+>>>>>>> 3320db877d03d7a951a257e4cfb5ce484d4887c3
 
         // some code goes here
         //Replace the following

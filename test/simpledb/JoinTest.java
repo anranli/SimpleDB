@@ -53,6 +53,16 @@ public class JoinTest extends SimpleDbTestBase {
                     7, 8, 5, 6, 7 });
   }
 
+<<<<<<< HEAD
+=======
+  @Test public void getJoinPredicategetJoinField1NamegetJoinField2Name() {
+    JoinPredicate pred = new JoinPredicate(0, Predicate.Op.EQUALS, 0);
+    Join op = new Join(pred, scan1, scan2);
+    assertEquals(pred, op.getJoinPredicate());
+    assertEquals(scan1.getTupleDesc().getFieldName(pred.getField1()), op.getJoinField1Name());
+  }
+
+>>>>>>> 3320db877d03d7a951a257e4cfb5ce484d4887c3
   /**
    * Unit test for Join.getTupleDesc()
    */

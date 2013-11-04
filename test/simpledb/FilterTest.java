@@ -33,6 +33,27 @@ public class FilterTest extends SimpleDbTestBase {
     assertEquals(expected, actual);
   }
 
+<<<<<<< HEAD
+=======
+  @Test public void getPredicategetChildrensetChildren() {
+    Predicate pred = new Predicate(0, Predicate.Op.EQUALS, TestUtil.getField(0));
+    Filter op = new Filter(pred, scan);
+    assertEquals(pred, op.getPredicate());
+    assertEquals(scan, op.getChildren()[0]);
+    try {
+      DbIterator child = op.getChildren()[1];
+      throw new AssertionError();
+    }
+    catch (Exception e) {
+    }
+    DbIterator[] scanArray = new DbIterator[1];
+    DbIterator scan2 = new TestUtil.MockScan(-3, 3, testWidth);
+    scanArray[0] = scan2;
+    op.setChildren(scanArray);
+    assertEquals(scan2, op.getChildren()[0]);
+  }
+
+>>>>>>> 3320db877d03d7a951a257e4cfb5ce484d4887c3
   /**
    * Unit test for Filter.rewind()
    */
@@ -83,28 +104,71 @@ public class FilterTest extends SimpleDbTestBase {
    */
   @Test public void filterEqual() throws Exception {
     Predicate pred;
+<<<<<<< HEAD
     this.scan = new TestUtil.MockScan(-5, 5, testWidth);
     pred = new Predicate(0, Predicate.Op.EQUALS, TestUtil.getField(-5));
     Filter op = new Filter(pred, scan);
     op.open();
+=======
+    this.scan = new TestUtil.ModifiedMockScan(-5, 5, testWidth);
+    pred = new Predicate(0, Predicate.Op.EQUALS, TestUtil.getField(-5));
+    Filter op = new Filter(pred, scan);
+    op.open();
+    op.rewind();
+    assertTrue(TestUtil.compareTuples(Utility.getHeapTuple(-5, testWidth),
+        op.next()));
+>>>>>>> 3320db877d03d7a951a257e4cfb5ce484d4887c3
     assertTrue(TestUtil.compareTuples(Utility.getHeapTuple(-5, testWidth),
         op.next()));
     op.close();
 
+<<<<<<< HEAD
     this.scan = new TestUtil.MockScan(-5, 5, testWidth);
+=======
+    this.scan = new TestUtil.ModifiedMockScan(-5, 5, testWidth);
+>>>>>>> 3320db877d03d7a951a257e4cfb5ce484d4887c3
     pred = new Predicate(0, Predicate.Op.EQUALS, TestUtil.getField(0));
     op = new Filter(pred, scan);
     op.open();
     assertTrue(TestUtil.compareTuples(Utility.getHeapTuple(0, testWidth),
         op.next()));
+<<<<<<< HEAD
     op.close();
 
     this.scan = new TestUtil.MockScan(-5, 5, testWidth);
+=======
+    assertTrue(TestUtil.compareTuples(Utility.getHeapTuple(0, testWidth),
+        op.next()));
+    op.close();
+
+    this.scan = new TestUtil.ModifiedMockScan(-5, 5, testWidth);
+>>>>>>> 3320db877d03d7a951a257e4cfb5ce484d4887c3
     pred = new Predicate(0, Predicate.Op.EQUALS, TestUtil.getField(4));
     op = new Filter(pred, scan);
     op.open();
     assertTrue(TestUtil.compareTuples(Utility.getHeapTuple(4, testWidth),
         op.next()));
+<<<<<<< HEAD
+=======
+    assertTrue(TestUtil.compareTuples(Utility.getHeapTuple(4, testWidth),
+        op.next()));
+    op.close();
+
+    this.scan = new TestUtil.MockScan(-5, 5, testWidth);
+    pred = new Predicate(0, Predicate.Op.LESS_THAN, TestUtil.getField(0));
+    op = new Filter(pred, scan);
+    op.open();
+    assertTrue(TestUtil.compareTuples(Utility.getHeapTuple(-5, testWidth),
+        op.next()));
+    assertTrue(TestUtil.compareTuples(Utility.getHeapTuple(-4, testWidth),
+        op.next()));
+    assertTrue(TestUtil.compareTuples(Utility.getHeapTuple(-3, testWidth),
+        op.next()));
+    assertTrue(TestUtil.compareTuples(Utility.getHeapTuple(-2, testWidth),
+        op.next()));
+    assertTrue(TestUtil.compareTuples(Utility.getHeapTuple(-1, testWidth),
+        op.next()));
+>>>>>>> 3320db877d03d7a951a257e4cfb5ce484d4887c3
     op.close();
   }
 

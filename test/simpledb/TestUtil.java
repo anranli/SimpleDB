@@ -133,7 +133,7 @@ public class TestUtil {
         while (expected.hasNext()) {
             Tuple expectedTup = expected.next();
             matched = false;
-            actual.rewind();
+            //actual.rewind();
 
             while (actual.hasNext()) {
                 Tuple next = actual.next();
@@ -296,6 +296,77 @@ public class TestUtil {
             cur++;
             return tup;
 		}
+    }
+
+    public static class ModifiedMockScan implements DbIterator {
+        private int cur, low, high, width;
+        private boolean repeat;
+
+        /**
+         * Creates a fake SeqScan that returns tuples sequentially with 'width'
+         * fields, each with the same value, that increases from low (inclusive)
+         * and high (exclusive) over getNext calls.
+         */
+        public ModifiedMockScan(int low, int high, int width) {
+            this.low = low;
+            this.high = high;
+            this.width = width;
+            this.cur = low;
+            this.repeat = false;
+        }
+
+        public void open() {
+        }
+
+        public void close() {
+        }
+
+        public void rewind() {
+            cur = low;
+            this.repeat = false;
+        }
+
+        public TupleDesc getTupleDesc() {
+            return Utility.getTupleDesc(width);
+        }
+
+        protected Tuple readNext() {
+            if ((cur >= high) && (repeat == true)){
+                return null;
+            }
+            else if (cur >= high){
+                this.cur = low;
+                this.repeat = true;
+            }
+
+            Tuple tup = new Tuple(getTupleDesc());
+            for (int i = 0; i < width; ++i)
+                tup.setField(i, new IntField(cur));
+            cur++;
+            return tup;
+        }
+
+        public boolean hasNext() throws DbException, TransactionAbortedException {
+            if ((cur >= high) && (repeat == true)) {
+                return false;
+            }
+            return true;
+        }
+
+        public Tuple next() throws DbException, TransactionAbortedException, NoSuchElementException {
+            if((cur >= high) && (repeat == true)) {
+                throw new NoSuchElementException();
+            }
+            else if (cur >= high){
+                this.cur = low;
+                this.repeat = true;
+            }
+            Tuple tup = new Tuple(getTupleDesc());
+            for (int i = 0; i < width; ++i)
+                tup.setField(i, new IntField(cur));
+            cur++;
+            return tup;
+        }
     }
 
     /**

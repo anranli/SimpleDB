@@ -92,7 +92,11 @@ public class HeapFile implements DbFile {
         randAccessFile.skipBytes(page.getId().pageNumber()*BufferPool.PAGE_SIZE);
         randAccessFile.write(page.getPageData());
         randAccessFile.close();
+<<<<<<< HEAD
         page.markDirty(false, null);
+=======
+        page.markDirty(false, new TransactionId());
+>>>>>>> 3320db877d03d7a951a257e4cfb5ce484d4887c3
     }
 
     /**
