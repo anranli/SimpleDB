@@ -20,16 +20,62 @@ public class IntHistogram {
      * @param min The minimum integer value that will ever be passed to this class for histogramming
      * @param max The maximum integer value that will ever be passed to this class for histogramming
      */
+
+    int buckets;
+    int min;
+    int max;
+    int int_histogram[];
+    double range;
+    double split;
+
     public IntHistogram(int buckets, int min, int max) {
-    	// some code goes here
+        // some code goes here
+        this.buckets = buckets;
+        this.min = min;
+        this.max = max;
+        this.range = this.max - this.min + 1;
+        createBuckets();
     }
 
-    /**
+    public void createBuckets(){
+        //check to see if buckets is 0
+
+        if (this.range < this.buckets){
+            this.int_histogram = new int[(int) this.range];
+            this.buckets = (int) this.range;
+            this.split = 1;
+        }
+        else {
+            this.int_histogram = new int[this.buckets];
+            this.split = range/buckets;
+        }
+    }
+
+    public int index(int number){
+        int slided_index = number - this.min;
+        if (number == this.max){
+            return (this.buckets - 1);
+        }
+        else {
+            int correct_index = (int) Math.round(slided_index/this.split);
+            return correct_index;
+        }
+    } 
+
+    public void getWidthOfBucket(int index){
+        
+    }
+
+    /** 
      * Add a value to the set of values that you are keeping a histogram of.
      * @param v Value to add to the histogram
      */
     public void addValue(int v) {
-    	// some code goes here
+        // some code goes here
+        if (!(v > this.max) && !(v < this.min)){
+            int index = this.index(v);
+            this.int_histogram[index] += 1;
+        }
     }
 
     /**
@@ -44,7 +90,11 @@ public class IntHistogram {
      */
     public double estimateSelectivity(Predicate.Op op, int v) {
 
-    	// some code goes here
+        // some code goes here
+        System.out.println(op);
+        if (op.equals(EQUALS)){
+
+        }
         return -1.0;
     }
     
