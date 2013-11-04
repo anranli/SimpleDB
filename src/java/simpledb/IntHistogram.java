@@ -91,10 +91,10 @@ public class IntHistogram {
     public double estimateSelectivity(Predicate.Op op, int v) {
 
         // some code goes here
-        System.out.println(op);
-        if (op.equals(EQUALS)){
+        // System.out.println(op);
+        // if (op.equals(EQUALS)){
 
-        }
+        // }
         return -1.0;
     }
     
