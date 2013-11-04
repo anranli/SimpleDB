@@ -1,0 +1,20 @@
+Jhoong Roh
+cs186-eh
+Anran Li
+cs186-mz
+
+Exercise 6: 
+
+Writeup: 
+Describe any design decisions you made, including your choice of page eviction policy. If you used something other than a nested-loops join, describe the tradeoffs of the algorithm you chose. Discuss and justify any changes you made to the API.
+Filter and Join - Predicate, JoinPredicate, and Filter are very straight forward and didn't require additional management with internal data structures. Join is done with the simple nested loop as indicated in the instructions.
+Aggregate - IntegerAggregator and StringAggregator both kep track of a list, which has the final output values maintained inside. As a helper for the AVG and COUNT aggregates, a HashTable of Fields to Int was also maintained. Aggregate creates either a String or an IntegerAggregator on open and feeds that Tuples. It then matched the values of that iterator as its iterator output.
+HeapFile Mutability - For HeapPage insertion, empty space is used or created and the neccessary info like slot id and record id is modified. For HeapPage deletion, the record is located with record id and the info is cleared. Similar is done for HeapFile methods with first locating the Page where the Tuple is on and loading or clearing the BufferPool as fit.
+Insertion and Deletion - Insert.java and Delete.java simply call's BufferPool's insertion and deletion methods. That locates the page, calls the page's insert or delete, marks it as dirty, and then updates the LRU list that keeps track of which page was least recently used in the BufferPool.
+Page Eviction - When inserting and deleting elements from the BufferPool, there's a LRU ArrayList that keeps track of the Pages from 0 being the LRU to the last element being the MRU. The evictPage() method is called in getPage() when the buffer pool size reaches its max size. Then, it evicts by flushing the page, removing it from the BufferPool, and removing it from the LRU list. Flushing works where if the page is dirty, it is written back to disk.
+
+Describe any missing or incomplete elements of your code.
+None
+
+Describe how long you spent on the project, and whether there was anything you found particularly difficult or confusing.
+20 hours between the two of us. Sometimes the instructions weren't that clear. For example, insert/get TupleDesc about which TupleDesc it was asking for. Also, we didn't get our first project back, which would've let us know if errors were in part 1 or part 2. That could've saved much time and/or many points since part 1 errors affect part 2.
