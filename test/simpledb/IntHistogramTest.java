@@ -46,6 +46,7 @@ public class IntHistogramTest {
 		// All of the values here are negative.
 		// Also, there are more of them than there are bins.
 		for (int c = -60; c <= -10; c++) {
+			//System.out.println(c);
 			h.addValue(c);
 			h.estimateSelectivity(Op.EQUALS, c);
 		}

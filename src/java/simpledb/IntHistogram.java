@@ -25,6 +25,9 @@ public class IntHistogram {
     int min;
     int max;
     int int_histogram[];
+    int highest[];
+    int lowest[];
+    int ntuples;
     double range;
     double split;
 
@@ -34,6 +37,7 @@ public class IntHistogram {
         this.min = min;
         this.max = max;
         this.range = this.max - this.min + 1;
+        this.ntuples = 0;
         createBuckets();
     }
 
@@ -42,29 +46,40 @@ public class IntHistogram {
 
         if (this.range < this.buckets){
             this.int_histogram = new int[(int) this.range];
+            this.lowest = new int[(int) this.range];
+            this.highest = new int[(int) this.range];
             this.buckets = (int) this.range;
             this.split = 1;
         }
         else {
             this.int_histogram = new int[this.buckets];
+            this.lowest = new int[this.buckets];
+            this.highest = new int[this.buckets];
             this.split = range/buckets;
         }
     }
 
     public int index(int number){
-        int slided_index = number - this.min;
-        if (number == this.max){
-            return (this.buckets - 1);
+        if (!(number > this.max) && !(number < this.min)){
+            int slided_index = number - this.min;
+            if (number == this.max){
+                return (this.buckets - 1);
+            }
+            else {
+                int correct_index = (int) Math.round(slided_index/this.split);
+                if (correct_index == this.buckets){
+                    return correct_index - 1;
+                }
+                else {
+                    return correct_index;
+                }
+            }
         }
         else {
-            int correct_index = (int) Math.round(slided_index/this.split);
-            return correct_index;
+            //number given is too low
+            return -1;
         }
     } 
-
-    public void getWidthOfBucket(int index){
-        
-    }
 
     /** 
      * Add a value to the set of values that you are keeping a histogram of.
@@ -75,7 +90,36 @@ public class IntHistogram {
         if (!(v > this.max) && !(v < this.min)){
             int index = this.index(v);
             this.int_histogram[index] += 1;
+            this.ntuples += 1;
+            if (this.int_histogram[index] == 1){
+                this.lowest[index] = v;
+                this.highest[index] = v;
+            }
+            else {
+                if (this.lowest[index] > v){
+                    this.lowest[index] = v;
+                }
+                else if (this.highest[index] < v){
+                    this.highest[index] = v;
+                }
+            }
         }
+    }
+
+    public double greaterThan(int index, int v){
+        double selectivity = 0.0;
+        for (int i = index; i < this.buckets; i++){
+            if (this.int_histogram[i] != 0){
+                double b_f = ((double) this.int_histogram[i])/(double) this.ntuples;
+                double b_part = 1.0;
+                //if we aren't in the index that contains v and its greater, just include it
+                if (v > this.lowest[i]){
+                    b_part = ((double) (this.highest[i] - v)/(double) (this.highest[i] - this.lowest[i] + 1));
+                }
+                selectivity += b_f * b_part;
+            }
+        }
+        return selectivity;
     }
 
     /**
@@ -91,11 +135,51 @@ public class IntHistogram {
     public double estimateSelectivity(Predicate.Op op, int v) {
 
         // some code goes here
-        System.out.println(op);
-        if (op.equals(EQUALS)){
+        int index = this.index(v);
+        if (op == Predicate.Op.EQUALS){
+            if ((v > this.max) || (v < this.min)){
+                return 0;
+            }
 
+            if (this.int_histogram[index] == 0){
+                return 0;
+            }
+            else {
+                double width = this.highest[index] - this.lowest[index] + 1;
+                return (double) (((double) this.int_histogram[index])/width)/this.ntuples;
+            }
         }
-        return -1.0;
+        else if (op == Predicate.Op.GREATER_THAN){
+            if (v > this.max){
+                return 0.0;
+            }
+            else if (v < this.min){
+                return 1.0;
+            }
+
+            if (this.highest[index] > v){
+                return this.greaterThan(index, v);
+            }
+            else {
+                return this.greaterThan(index + 1, v);
+            }
+        }
+        else if (op == Predicate.Op.GREATER_THAN_OR_EQ){
+            return (this.estimateSelectivity(Predicate.Op.EQUALS, v) + this.estimateSelectivity(Predicate.Op.GREATER_THAN, v));
+            
+        }
+        else if (op == Predicate.Op.LESS_THAN){
+            return (1.0 - this.estimateSelectivity(Predicate.Op.GREATER_THAN_OR_EQ, v));
+        }
+        else if (op == Predicate.Op.LESS_THAN_OR_EQ){
+            return (1.0 - this.estimateSelectivity(Predicate.Op.GREATER_THAN, v));
+        }
+        else if (op == Predicate.Op.NOT_EQUALS){
+            return (this.estimateSelectivity(Predicate.Op.GREATER_THAN, v) + this.estimateSelectivity(Predicate.Op.LESS_THAN, v));
+        }
+        else {
+            return -1.0;
+        }
     }
     
     /**
@@ -108,8 +192,9 @@ public class IntHistogram {
      * */
     public double avgSelectivity()
     {
+        //Piazza 742
         // some code goes here
-        return 1.0;
+        return -1.0;
     }
     
     /**
