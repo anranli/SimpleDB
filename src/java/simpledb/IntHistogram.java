@@ -55,7 +55,7 @@ public class IntHistogram {
             this.int_histogram = new int[this.buckets];
             this.lowest = new int[this.buckets];
             this.highest = new int[this.buckets];
-            this.split = range/buckets;
+            this.split = range/((double) buckets);
         }
     }
 
@@ -178,7 +178,7 @@ public class IntHistogram {
             return (this.estimateSelectivity(Predicate.Op.GREATER_THAN, v) + this.estimateSelectivity(Predicate.Op.LESS_THAN, v));
         }
         else {
-            return -1.0;
+            return 0.0;
         }
     }
     

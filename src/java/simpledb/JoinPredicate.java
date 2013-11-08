@@ -31,7 +31,7 @@ public class JoinPredicate implements Serializable {
         // some code goes here
         this.field1 = field1;
         this.op = op;
-        this.field1 = field2;
+        this.field2 = field2;
     }
 
     /**
@@ -42,7 +42,12 @@ public class JoinPredicate implements Serializable {
      */
     public boolean filter(Tuple t1, Tuple t2) {
         // some code goes here
-        return t1.getField(this.getField1()).compare(this.getOperator(), t2.getField(this.getField2()));
+        //if (((t1.getField(this.getField1())).getType()).equals(t2.getField(this.getField2()).getType())) {
+            return t1.getField(this.getField1()).compare(this.getOperator(), t2.getField(this.getField2()));
+        //}
+        //else {
+        //    return false;
+        //}
     }
     
     public int getField1()

@@ -76,6 +76,16 @@ public class TableStats {
      *            The cost per page of IO. This doesn't differentiate between
      *            sequential-scan IO and disk seeks.
      */
+
+    HeapFile file;
+    DbFileIterator iterator;
+    int tableid;
+    int ioCostPerPage;
+    int min[];
+    int max[];
+    Object histograms[];
+    double numTuples;
+
     public TableStats(int tableid, int ioCostPerPage) {
         // For this function, you'll have to get the
         // DbFile for the table in question,
@@ -85,6 +95,93 @@ public class TableStats {
         // necessarily have to (for example) do everything
         // in a single scan of the table.
         // some code goes here
+
+        this.numTuples = 0.0;
+        this.tableid = tableid;
+        this.ioCostPerPage = ioCostPerPage;
+        this.file = (HeapFile) Database.getCatalog().getDbFile(tableid);
+        try {
+            this.scanAndFile();
+        }
+        catch (Exception e){
+            System.out.println("fuck");
+        }
+    }
+
+    public void scanAndFile() throws DbException, TransactionAbortedException {
+        TransactionId tid = new TransactionId();
+
+        //first scan to find the min max of all fields
+        this.iterator = file.iterator(tid);
+        this.iterator.open();
+        this.fieldRanges();
+        this.createHistograms();
+        
+        //second scan to insert records after creating the histograms
+        this.iterator.rewind();
+        while (this.iterator.hasNext()){
+
+            Tuple tuple = this.iterator.next();
+            for (int i = 0; i < this.file.getTupleDesc().numFields(); i++){
+                if (this.file.getTupleDesc().getFieldType(i).equals(Type.INT_TYPE)){
+                    ((IntHistogram) this.histograms[i]).addValue(((IntField) tuple.getField(i)).getValue());
+                }
+                else if (this.file.getTupleDesc().getFieldType(i).equals(Type.STRING_TYPE)){
+                    ((StringHistogram) this.histograms[i]).addValue(((StringField) tuple.getField(i)).getValue());
+                }
+            }
+            this.numTuples += 1.0;
+        }
+        this.iterator.close();
+    }
+
+    public void fieldRanges() throws DbException, TransactionAbortedException{
+        //go through all the tuples
+        while (this.iterator.hasNext()){
+            Tuple tuple = this.iterator.next();
+            //if we haven't initialized min or max
+            if (this.min == null){
+                this.min = new int[this.file.getTupleDesc().numFields()];
+                this.max = new int[this.file.getTupleDesc().numFields()];
+                //go through each field in the tuple and set the value to be this first tuple
+                for (int i = 0; i < this.file.getTupleDesc().numFields(); i++){
+                    Field field = tuple.getField(i);
+                    if (field.getType().equals(Type.INT_TYPE)){
+                        this.min[i] = ((IntField) field).getValue();
+                        this.max[i] = ((IntField) field).getValue();
+                    }
+                    //not so sure what to do for string
+                }
+            }
+            //if we have initialized min or max, then it has a value
+            else {
+                //go through each field in the tuple and check for min or max
+                for (int i = 0; i < this.file.getTupleDesc().numFields(); i++){
+                    Field field = tuple.getField(i);
+                    if (field.getType().equals(Type.INT_TYPE)){
+                        int value = ((IntField) field).getValue();
+                        if (this.min[i] > value){
+                            this.min[i] = value;
+                        }
+                        else if (this.max[i] < value){
+                            this.max[i] = value;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public void createHistograms(){
+        this.histograms = new Object[this.file.getTupleDesc().numFields()];
+        for (int i = 0; i < this.file.getTupleDesc().numFields(); i++){
+            if (this.file.getTupleDesc().getFieldType(i).equals(Type.INT_TYPE)){
+                this.histograms[i] = new IntHistogram(NUM_HIST_BINS, this.min[i], this.max[i]);
+            }
+            else if (this.file.getTupleDesc().getFieldType(i).equals(Type.STRING_TYPE)){
+                this.histograms[i] = new StringHistogram(NUM_HIST_BINS);
+            }
+        }
     }
 
     /**
@@ -101,7 +198,7 @@ public class TableStats {
      */
     public double estimateScanCost() {
         // some code goes here
-        return 0;
+        return (double) (this.file.numPages() * this.ioCostPerPage);
     }
 
     /**
@@ -115,7 +212,10 @@ public class TableStats {
      */
     public int estimateTableCardinality(double selectivityFactor) {
         // some code goes here
-        return 0;
+
+        //using numTuples may not be correct
+
+        return (int) Math.floor(this.numTuples * selectivityFactor);
     }
 
     /**
@@ -148,7 +248,17 @@ public class TableStats {
      */
     public double estimateSelectivity(int field, Predicate.Op op, Field constant) {
         // some code goes here
-        return 1.0;
+        if (constant.getType().equals(Type.INT_TYPE)){
+            IntHistogram histogram = (IntHistogram) this.histograms[field];
+            return histogram.estimateSelectivity(op, ((IntField) constant).getValue());
+        }
+        else if (constant.getType().equals(Type.STRING_TYPE)){
+            StringHistogram histogram = (StringHistogram) this.histograms[field];
+            return histogram.estimateSelectivity(op, ((StringField) constant).getValue());
+        }
+        else {
+            return -1.0;
+        }
     }
 
     /**
@@ -156,7 +266,7 @@ public class TableStats {
      * */
     public int totalTuples() {
         // some code goes here
-        return 0;
+        return (int) this.numTuples;
     }
 
 }

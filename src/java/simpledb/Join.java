@@ -30,8 +30,6 @@ public class Join extends Operator {
         this.p = p;
         this.child1 = child1;
         this.child2 = child2;
-        this.children[0] = child1;
-        this.children[1] = child2;
         this.iterator = null;      
     }
 
@@ -43,7 +41,6 @@ public class Join extends Operator {
             Tuple tuple1 = this.child1.next();
             while (this.child2.hasNext()){
                 Tuple tuple2 = this.child2.next();
-
                 if (this.getJoinPredicate().filter(tuple1, tuple2)){
                     Tuple tupleFinal = new Tuple(this.getTupleDesc());
                     Iterator fields = tuple1.fields();
@@ -163,14 +160,12 @@ public class Join extends Operator {
     @Override
     public DbIterator[] getChildren() {
         // some code goes here
-        return this.children;
+        return new DbIterator[]{this.child1, this.child2};
     }
 
     @Override
     public void setChildren(DbIterator[] children) {
         // some code goes here
-        this.children[0] = children[0];
-        this.children[1] = children[1];
         this.child1 = children[0];
         this.child2 = children[1];
     }

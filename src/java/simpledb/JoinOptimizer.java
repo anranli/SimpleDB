@@ -111,7 +111,9 @@ public class JoinOptimizer {
             // HINT: You may need to use the variable "j" if you implemented
             // a join algorithm that's more complicated than a basic nested-loops
             // join.
-            return -1.0;
+
+            //joincost(t1 join t2) = scancost(t1) + ntups(t1) x scancost(t2) + ntups(t1) x ntups(t2)
+            return cost1 + card1 * cost2 + card1 * card2;
         }
     }
 
@@ -156,7 +158,53 @@ public class JoinOptimizer {
             Map<String, Integer> tableAliasToId) {
         int card = 1;
         // some code goes here
-        return card <= 0 ? 1 : card;
+        if (joinOp == Predicate.Op.EQUALS){
+            if (t1pkey && t2pkey){
+                //if they are both primary keys, the most tuples can you have is
+                //limited by the smaller table
+                if (card1 > card2){
+                    return card2;
+                }
+                else {
+                    return card1;
+                }
+            }
+            else if (t1pkey){
+                return card2;
+            }
+            else if (t2pkey){
+                return card1;
+            }
+            else {
+                if (card1 > card2){
+                    return card1;
+                }
+                else {
+                    return card2;
+                }
+            }
+        }
+        else if (joinOp == Predicate.Op.NOT_EQUALS){
+            return (int) (0.3 * card1 * card2);
+        }
+        else if (joinOp == Predicate.Op.GREATER_THAN){
+            return (int) (0.3 * card1 * card2);
+        }
+        else if (joinOp == Predicate.Op.GREATER_THAN_OR_EQ){
+            return (int) (0.3 * card1 * card2);
+        }
+        else if (joinOp == Predicate.Op.LESS_THAN){
+            return (int) (0.3 * card1 * card2);
+        }
+        else if (joinOp == Predicate.Op.LESS_THAN_OR_EQ){
+            return (int) (0.3 * card1 * card2);
+        }
+        else if (joinOp == Predicate.Op.LIKE){
+            return (int) (0.3 * card1 * card2);
+        }
+        else {
+            return 0;
+        }
     }
 
     /**
@@ -222,7 +270,40 @@ public class JoinOptimizer {
 
         // some code goes here
         //Replace the following
-        return joins;
+        PlanCache pc = new PlanCache();
+        for (int i = 1; i <= this.joins.size(); i++){
+            Set<Set<LogicalJoinNode>> subsets = enumerateSubsets(joins, i);
+            Iterator<Set<LogicalJoinNode>> subsets_iterator = subsets.iterator();
+            while(subsets_iterator.hasNext()){
+                CostCard bestCostSoFar = new CostCard();
+                bestCostSoFar.cost = Double.MAX_VALUE;
+                Set<LogicalJoinNode> joinSet = subsets_iterator.next();
+                Iterator<LogicalJoinNode> nodes_iterator = joinSet.iterator();
+                while (nodes_iterator.hasNext()){
+                    LogicalJoinNode joinToRemove = nodes_iterator.next();
+                    CostCard cost = this.computeCostAndCardOfSubplan(stats, filterSelectivities, joinToRemove, joinSet, bestCostSoFar.cost, pc);
+                    //can return null if no linear join is possible or if the cost of all plans is greater than the bestCostSoFar
+                    if (cost != null){
+                        bestCostSoFar = cost;
+                    }
+                    pc.addPlan(joinSet, bestCostSoFar.cost, bestCostSoFar.card, bestCostSoFar.plan);
+                }
+            }
+        }
+        if (explain){
+            printJoins(this.joins, pc, stats, filterSelectivities);
+        }
+        Set<LogicalJoinNode> j = new HashSet<LogicalJoinNode>();
+        Iterator<LogicalJoinNode> node_iterator = this.joins.iterator();
+        while (node_iterator.hasNext()){
+            j.add(node_iterator.next());
+        }
+        if (pc.getOrder(j) == null){
+            return new Vector<LogicalJoinNode>();
+        }
+        else{
+            return pc.getOrder(j);
+        }
     }
 
     // ===================== Private Methods =================================
