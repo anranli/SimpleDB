@@ -1,0 +1,255 @@
+Anran Li, cs186-mz
+Jhoong Roh, cs186-eh
+
+
+1. 
+Parser.main()
+	- Entry point for SimpleDB. It creates a Parser and calls Parser.start().
+Parser.start()
+	- Calls Database.getCatalog().loadSchema(argv[0]) which loads the database depending on the user defined argument. 
+	- Calls TableStats.computeStatistics(), which iterates over the table ids and creates a new TableStats that corresponds to each table id and remembers it in a map.
+	- Then, there are a lot of code for handling arguments and splitting/parsing the input query.
+	- Calls processNextStatement() with the input as a ByteStream.
+Parser.processNextStatement()
+	- Creats a ZStatement from parsing the input.
+	- Creates a new Transaction and calls start() on the Transaction.
+	- Handles the ZStatement depending on if it is an instance of ZInsert, ZDelete, or ZQuery by calling handleInsertStatement(), handleDeleteStatement(), or handleQueryStatement().
+	- If the query is not null, the query is executed by calling query.execute().
+Parser.handleQueryStatement()
+	- Creates a new Query using the TransactionId input.
+	- Creates a new LogicalPlan by calling parseQueryLogicalPlan() with the ZQuery and TransactionId inputs.
+	- Creates a new physical plan by calling LogicalPlan.physicalPlan() using the TableStats mapping that was created in TableStats.computeStatics() of Parser.start().
+	- If the physical plan is not null, then a Method is created and calls invoke() to help display the query plan visually.
+Parser.parseQueryLogicalPlan()
+	- Creates a new LogicalPlan and calls setQuery() with the input Query
+	- Scans the table in the FROM clause. Calls LogicalPlan.addScan().
+	- Parse the WHERE clause, creating Filters and Joins where needed in processExpression(). Calls LogicalPlan.addJoin() and/or LogicalPlan.addFilter().
+	- Look for GROUP BY field and verify valid syntax. Calls LogicalPlan.addProjectField().
+	- Look through the SELECT field to verify valid syntax and note aggregates. Calls LogicalPlan.addAggregate().
+	- Look for ORDER BY field and verify valid syntax. Calls LogicalPlan.addOrderBy().
+	- Return the LogicalPlan
+Parser.processExpression()
+	- Recurisively calls processExpression() if input operators contain AND
+	- Check for other valid/supported syntax
+	- Calculates if a join is needed
+	- If a left operation is a query, then a virtual table is generated
+	- If a right operation is a query, then parseQueryLogicalPlan() is called again to parse that query
+	- If a join is not needed, then a filter is needed
+LogicalPlan.addScan()
+	- Adds a scan node for each alias of table accessed by the LogicalPlan.
+LogicalPlan.addJoin()
+	- Adds a join between a field and a subquery or 2 fields of 2 different tables by creating new LogicalSubplanJoinNodes or LogicalJoinNodes.
+LogicalPlan.addFilter()
+	- Adds a new filter to the LogicalPlan by creating a new LogicalFilterNode and adding it.
+LogicalPlan.addProjectField()
+	- Add field/aggregate combinations select list of query by creating a new LogicalSelectListNode and adding it to the select list.
+LogicalPlan.addAggregate()
+	- Set aggregate fields to input.
+LogicalPlan.addOrderBy()
+	- Set order by fields to input.
+LogicalPlan.physicalPlan()
+	- Converts LogicalPlan into a physical plan (DBIterator)
+	- Creates several maps for equivilence, filter selectivities, and stats
+	- Iterate over the table tuples (scan) and put appropriate elements/calculations into subplan, stats, and filter selectivities maps.
+	- Do the same as above but for filters
+	- Create a JoinOptimizer and iterate over the joins. Create 2 plans, one for subquery joins or and one of joins between 2 different tables. Call JoinOptimizer.instantiateJoin() and use other variables to determine the subplan and add it to the map.
+	- Iterate over the select list, look for aggregate operations, and determine the order of projecting output fields and types by saving it to local lists.
+	- Create new Aggregate and new OrderBy with appropiate parameters from input.
+Query.execute()
+	- The output query is just printed and returned (whose properties were set during handleQueryStatement()).
+
+
+6. 
+6.1
+SimpleDB> select d.fname, d.lname
+from Actor a, Casts c, Movie_Director m, Director d
+where a.id=c.pid and c.mid=m.mid and m.did=d.id 
+and a.fname='John' and a.lname='Spicer';
+Started a new transaction tid = 6
+Added scan of table a
+Added scan of table c
+Added scan of table m
+Added scan of table d
+Added join between a.id and c.pid
+Added join between c.mid and m.mid
+Added join between m.did and d.id
+Added select list field d.fname
+Added select list field d.lname
+[a:c, c:m, m:d]
+PATH SO FAR = [a:c]
+PATH SO FAR = [a:c, c:m]
+PATH SO FAR = [m:d, a:c, c:m]
+The query plan is:
+                            π(d.fname,d.lname),card:1
+                            |
+                            ⨝(a.id=c.pid),card:1
+  __________________________|___________________________
+  |                                                    |
+  σ(a.lname=Spicer),card:1                             ⨝(m.mid=c.mid),card:29729
+  |                                    ________________|_________________
+  σ(a.fname=John),card:1               |                                |
+  |                                    ⨝(d.id=m.did),card:2791          |
+  |                           _________|_________                       |
+  |                           |                 |                     scan(Casts c)
+scan(Actor a)               scan(Director d)  scan(Movie_Director m)
+
+d.fname d.lname 
+------------------------
+
+ 0 rows.
+Transaction 6 committed.
+----------------
+
+According to how the Parser creates a LogicalPlan, all the different tables in FROM are individually scanned in at the start. Then, it will perform all the WHERE conditions that only apply to one table (i.e. a.fname='John'), as that selection would produce the maximum optimization and decrease number of joins. According to the Join Plan, Movie_Director Director has the least cost so you join them first. Then, Casts has the next smallest cost with Actor having the greatest cost. So, the join orders make sense.
+
+
+
+6.2
+The query we made was to get the first and last name of all the directors who made a comedy movie in 2005.
+
+SimpleDB> select d.fname, d.lname from Director d, Movie m, Genre g, Movie_Director md where d.id=md.did and md.mid=m.id and m.id=g.mid and g.genre='Comedy' and m.year=2005; 
+Started a new transaction tid = 6
+Added scan of table d
+Added scan of table m
+Added scan of table g
+Added scan of table md
+Added join between d.id and md.did
+Added join between md.mid and m.id
+Added join between m.id and g.mid
+Added select list field d.fname
+Added select list field d.lname
+[d:md, md:m, m:g]
+PATH SO FAR = [d:md]
+PATH SO FAR = [d:md, md:m]
+PATH SO FAR = [m:g, d:md, md:m]
+The query plan is:
+                                π(d.fname,d.lname),card:1
+                                |
+                                ⨝(g.mid=m.id),card:1
+  ______________________________|______________________________
+  |                                                           |
+  σ(g.genre=Comedy),card:1                                    ⨝(md.did=d.id),card:2597
+  |                                        ___________________|____________________
+  |                                        |                                      |
+  |                                        ⨝(m.id=md.mid),card:2791               |
+  |                           _____________|______________                        |
+  |                           |                          |                        |
+  |                           σ(m.year=2005),card:122    |                        |
+  |                           |                          |                      scan(Director d)
+scan(Genre g)               scan(Movie m)              scan(Movie_Director md)
+
+d.fname d.lname 
+------------------------
+Barbara Ricci   
+
+John    D'Arco  
+
+Monty   Arnold  
+
+Roman   Deppe   
+
+Ron Perozzi 
+
+Debbie  Lum 
+
+Shane   Black   
+
+Dmitri  Tomashpolsky    
+
+Ted Mills   
+
+Robbie  Kenyon  
+
+Cameron Edser   
+
+Michael Richards    
+
+Wael    Ehsan   
+
+Rutaiwan    Wongsirasawad   
+
+Frank   Quetglas    
+
+James   Pellerito   
+
+Keith   Truesdell   
+
+Farhad  Mann    
+
+Robert  Benfer  
+
+Gi-Sang Jeon    
+
+Byeong-hyeon    Ji  
+
+David   Devine  
+
+Thomas  McCluskey   
+
+Rafael  Edholm  
+
+Landon  Zakheim 
+
+Amar    Arhab   
+
+Fabrice Michelin    
+
+Jamie   Campbell    
+
+Joel    Wilson  
+
+Scott   Zakarin 
+
+Paul    Seed    
+
+Charlotte Sachs Bostrup 
+
+Grigory Shikharevich    
+
+Gregor  Buchkremer  
+
+Cyrene R.   Houdini 
+
+Hardeen H.  Houdini 
+
+Josefina    Lopez   
+
+Florian Kehrer  
+
+Bill    Oliver  
+
+Steve   Kozel   
+
+Jerrold Ridenour    
+
+Ian Lorimer 
+
+Richard Gabai   
+
+Guy Logan   
+
+Dave    Shortland   
+
+Carolyn Macartney   
+
+Lydia   Budianto    
+
+Tonnette    Stanford    
+
+
+ 48 rows.
+Transaction 6 committed.
+----------------
+4.89 seconds
+ 
+
+First, we scan each of the tables. We do each of the individual selects on the individual tables (i.e. g.genre=Comedy). Then, Movie and Movie_Director are the smallest tables, so we join those first and select on that. Then we join the result of that with Director and then lastly Genre because they have increasingly large costs.
+
+
+
+There's no changes to the API.
+
+There's no missing/incomplete parts of our code.
+
+We spent a total of 12 hours on the project.
+One difficult part was exercise 1. It's kind of hard understanding what to do if we work with the entire project at the start of the project. Also, there should be clearer instructions on what methods you want to be explained and how much detail is needed. 
