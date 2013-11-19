@@ -27,14 +27,14 @@ public class BufferPool {
      *
      * @param numPages maximum number of pages in this buffer pool.
      */
-    private HashMap<PageId, Page> buffPool;
+    private ConcurrentHashMap<PageId, Page> buffPool;
     private int maxPages;
     private ArrayList<PageId> lruList;
 
     public BufferPool(int numPages) {
         // some code goes here
         maxPages = numPages;
-        buffPool = new HashMap<PageId, Page>();
+        buffPool = new ConcurrentHashMap<PageId, Page>();
         lruList = new ArrayList<PageId>();
     }
 
