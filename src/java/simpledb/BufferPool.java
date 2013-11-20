@@ -239,12 +239,22 @@ public class BufferPool {
     private synchronized  void evictPage() throws DbException {
         // some code goes here
         // not necessary for proj1
-        PageId pid = this.lru_list.get(0);
+        int i;
+        for (i = 0; i < this.lru_list.size(); i++) {
+            HeapPageId pid = (HeapPageId) this.lru_list.get(i);
+            if (((HeapPage) this.buffer_pool.get(pid)).isDirty() == null) {
+                break;
+            }
+        }
+
+        if (i == this.lru_list.size()){ throw new DbException("No dirty pages"); }
+
+        PageId pid = this.lru_list.get(i);
         if (pid.equals(this.buffer_pool.get(pid).getId())){
             try {
                 this.flushPage(pid);
                 this.buffer_pool.remove(pid); 
-                this.lru_list.remove(0);
+                this.lru_list.remove(i);
             }
             catch (IOException io){
                 throw new DbException("Could not flush page");

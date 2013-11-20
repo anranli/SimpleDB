@@ -21,70 +21,49 @@ public class LockManager {
     //only one thread at a time
     public synchronized void lock(TransactionId tid, PageId pid, Permissions perm) throws TransactionAbortedException {
         if (this.getPageLockType(pid) != null){
-            //if shared lock, go ahead and grant access
             if (perm == Permissions.READ_ONLY) {
-                //check if its read only and we don't want to add in the same tid
                 if ((this.getPageLockType(pid) == Permissions.READ_ONLY) && !(this.page_locks.get(pid).containsKey(tid))) {
+                    //check if its read only and we don't want to add in the same tid
                     this.page_locks.get(pid).put(tid, true);
                 }
-                
                 else if ((this.getPageLockType(pid) == Permissions.READ_WRITE) && !(this.page_locks.get(pid).containsKey(tid))) {
-                    //if its write, then wait until no exclusive lock and then create a new page lock
-                    if (this.getPageLockType(pid) != null){
-                        try {
-                            Thread.sleep(100);
-                        }
-                        catch (Exception e){
-                            throw new TransactionAbortedException();
-                        }
-                    }
-                    if (this.getPageLockType(pid) != null){
-                        throw new TransactionAbortedException();
-                    }
-                    else {
+                    //if page has write lock and the tid with lock isn't the same, then block until no exclusive lock and then create a new page lock
+                    if (this.getPageLockType(pid) != null){ this.block(); }
+
+                    //if the lock still isn't up, then throw an exception
+                    if (this.getPageLockType(pid) == null){
                         this.grantNewPageLock(tid, pid, Permissions.READ_ONLY);
                     }
+                    else { throw new TransactionAbortedException(); }
                 }
             }
             else {
-                //wait until either no locks exist for the page or if the only page left is the one we care about (upgrade) 
+                if (this.page_locks.get(pid).containsKey(tid)) {
+                    //if the locks on this page contains the key, then block until
+                    if (this.page_locks.get(pid).entrySet().size() != 1){ 
+                        this.block();
+                    }
 
-                if ((this.page_locks.get(pid).entrySet().size() == 1) && (this.page_locks.get(pid).containsKey(tid))) {
-                    this.page_lock_type.remove(pid);
-                    this.page_lock_type.put(pid, Permissions.READ_WRITE);
-                }
-                else if (this.page_locks.get(pid).containsKey(tid)) {
-                    try{
-                        Thread.sleep(100);
-                    }
-                    catch (Exception e){
-                        throw new TransactionAbortedException();
-                    }
-                    //see if the lock is gone
-                    if (this.page_locks.get(pid).entrySet().size() == 1){
+                    //upgrade condition
+                    if ((this.page_locks.get(pid).entrySet().size() == 1) && (this.page_locks.get(pid).containsKey(tid))) {
+                        //if there is only one lock on it and tid is the one we care about
                         this.page_lock_type.remove(pid);
                         this.page_lock_type.put(pid, Permissions.READ_WRITE); 
                     }
-                    else {
-                        throw new TransactionAbortedException();
+                    else if (this.getPageLockType(pid) == null){ 
+                        //see if the lock is gone          
+                        this.grantNewPageLock(tid, pid, Permissions.READ_WRITE);
                     }
+                    else { throw new TransactionAbortedException(); }
                 }
                 else {
-                    if (this.getPageLockType(pid) != null){
-                        try {
-                            Thread.sleep(100);
-                        }
-                        catch (Exception e){
-                            throw new TransactionAbortedException();
-                        }
-                    }
+                    //since the tid isn't part of current locks, we have to block until all locks are gone
+                    if (this.getPageLockType(pid) != null){ this.block(); }
 
                     if (this.getPageLockType(pid) == null){
                         this.grantNewPageLock(tid, pid, Permissions.READ_WRITE);
                     }
-                    else {
-                        throw new TransactionAbortedException();
-                    }
+                    else { throw new TransactionAbortedException(); }
                 }
             }
         }
@@ -94,12 +73,8 @@ public class LockManager {
     }
 
     public synchronized Permissions getPageLockType(PageId pid){
-        if (page_lock_type.containsKey((PageId) pid)){
-            return page_lock_type.get((PageId) pid);
-        }
-        else {
-            return null;
-        }
+        if (page_lock_type.containsKey((PageId) pid)){ return page_lock_type.get((PageId) pid); }
+        else { return null; }
     }
 
     public synchronized void removeLock(TransactionId tid, PageId pid){
@@ -121,15 +96,13 @@ public class LockManager {
 
     public synchronized Boolean holdsLock(TransactionId tid, PageId pid){
         if (this.getPageLockType(pid) != null){
-            if (this.page_locks.get(pid).containsKey(tid)){
-                return true;
-            }
-            else{
-                return false;
-            }
+            if (this.page_locks.get(pid).containsKey(tid)){ return true; }
+            else{ return false; }
         }
-        else {
-            return false;
-        }
+        else { return false; }
+    }
+    public synchronized void block() throws TransactionAbortedException {
+        try { Thread.sleep(100); }
+        catch (Exception e){ throw new TransactionAbortedException(); }
     }
 }
