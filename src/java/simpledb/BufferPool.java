@@ -153,20 +153,20 @@ public class BufferPool {
     public synchronized void commit(TransactionId tid) throws IOException{
         if (this.lock_manager.getPages(tid) != null){
             ArrayList<PageId> pages = this.lock_manager.getPages(tid);
-            for (int i = 0; i < pages.size(); i++){
-                if (this.buffer_pool.get(pages.get(i)).isDirty() == tid){
-                    this.flushPage(pages.get(i));
+            while (pages.size() != 0){
+                if (this.buffer_pool.get(pages.get(0)).isDirty() == tid){
+                    this.flushPage(pages.get(0));
                 }
-                this.lock_manager.removeLock(tid, pages.get(i));
+                this.lock_manager.removeLock(tid, pages.get(0));
             }
         }
     }
     public synchronized void abort(TransactionId tid) throws IOException{
         if (this.lock_manager.getPages(tid) != null){
             ArrayList<PageId> pages = this.lock_manager.getPages(tid);
-            for (int i = 0; i < pages.size(); i++){
-                this.discardPage(pages.get(i));
-                this.lock_manager.removeLock(tid, pages.get(i));
+            while (pages.size() != 0){
+                this.buffer_pool.put(pages.get(0), this.buffer_pool.get(pages.get(0)).getBeforeImage());
+                this.lock_manager.removeLock(tid, pages.get(0));
             }
         }
     }
@@ -250,8 +250,9 @@ public class BufferPool {
         // some code goes here
         // not necessary for proj1
         DbFile dbf = (Database.getCatalog()).getDbFile(pid.getTableId());
-        if ((dbf.readPage(pid)).isDirty() != null) {
-            dbf.writePage(dbf.readPage(pid));
+        //DONT KNOW IF WE SHOULD ACCESS IT THROUGH GET INSTEAD OF GETPAGE
+        if (this.buffer_pool.get(pid).isDirty() != null) {
+            dbf.writePage(this.buffer_pool.get(pid));
         }
     }
 

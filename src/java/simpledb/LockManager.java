@@ -23,19 +23,22 @@ public class LockManager {
 
     //only one thread at a time
     public synchronized void lock(TransactionId tid, PageId pid, Permissions perm) throws TransactionAbortedException {
+        //System.out.println(perm);
+        //System.out.println(pid);
         if (!(this.tid_locks.containsKey(tid))){
             this.tid_locks.put(tid, new ArrayList<PageId>());
         }
 
+        //System.out.println(this.getPageLockType(pid) == null);
         if (this.getPageLockType(pid) == null) {
-            System.out.println(perm);
-            System.out.println(tid.getId());
+            // System.out.println("new lock: " + tid);
+            // System.out.println("new page: " + pid);
             this.grantNewPageLock(tid, pid, perm);
         }
         else {
-            System.out.println(perm);
-            System.out.println(tid.getId());
+            //System.out.println(tid.getId());
             if (perm == Permissions.READ_ONLY) {
+
                 if ((this.getPageLockType(pid) == Permissions.READ_ONLY) && !(this.page_locks.get(pid).containsKey(tid))) {
                     //check if its read only and we don't want to add in the same tid
                     this.page_locks.get(pid).put(tid, true);
@@ -90,11 +93,13 @@ public class LockManager {
     }
 
     public synchronized void removeLock(TransactionId tid, PageId pid){
+        // System.out.println("removelock: " + pid);
         this.page_locks.get(pid).remove(tid);
         this.tid_locks.get(tid).remove(pid);
         if (this.page_locks.get(pid).entrySet().size() == 0){
             //nothing is locked
             this.page_lock_type.remove(pid);
+            // System.out.println(this.getPageLockType(pid) == null);
             //remove the hash
             this.page_locks.remove(pid);
         }

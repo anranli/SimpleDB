@@ -373,11 +373,13 @@ public class HeapPage implements Page {
 	    private HeapPage pg;
 	    
 	    public iteration(HeapPage thisPage){
-		currentIndex = 0;
+		currentIndex = -1;
 		pg = thisPage;
 	    }
 
 	    public boolean hasNext() {
+            //System.out.println(this.nextSlotNumber());
+            //System.out.println(pg.getNumTuples());
 		return (this.nextSlotNumber() < pg.getNumTuples());
 	    }
 
@@ -394,11 +396,27 @@ public class HeapPage implements Page {
 	    }
 	    
 	    private int nextSlotNumber(){
-		while((currentIndex < pg.getNumTuples()) && !(pg.isSlotUsed(currentIndex))){
-		    currentIndex++;
+            //System.out.println(currentIndex);
+            //System.out.println(pg.getNumTuples());
+            if (currentIndex != -1) {
+		        while((currentIndex < pg.getNumTuples()) && !(pg.isSlotUsed(currentIndex))){
+		          currentIndex++;
+                }
+            }
+            else {
+                if (pg.isSlotUsed(0)){
+                    // System.out.println("Yes");
+                    currentIndex = 0;
+                    return 0;
+                }
+                else {
+                    // System.out.println("No");
+                    currentIndex = 0;
+                    return this.nextSlotNumber();
+                }
+            }
 		    //System.out.println(currentIndex);
-		}
-		return currentIndex;
+		    return currentIndex;
 	    }
 
             public void remove() {

@@ -164,6 +164,7 @@ public class HeapFile implements DbFile {
     // see DbFile.java for javadocs
     public DbFileIterator iterator(TransactionId tid) {
         // some code goes here
+
 	class iteration implements DbFileIterator{
 
 	    private int currentIndex;
