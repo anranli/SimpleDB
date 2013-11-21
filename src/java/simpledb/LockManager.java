@@ -7,7 +7,8 @@ import java.util.concurrent.*;
 
 public class LockManager {
     ConcurrentHashMap<PageId, ConcurrentHashMap<TransactionId, Boolean>> page_locks;
-    ConcurrentHashMap<PageId, Permissions> page_lock_type;  
+    ConcurrentHashMap<PageId, Permissions> page_lock_type; 
+    ConcurrentHashMap<TransactionId, ArrayList<PageId>> tid_locks; 
 
     public LockManager() {
         // some code goes here
@@ -16,15 +17,29 @@ public class LockManager {
         this.page_locks = new ConcurrentHashMap<PageId, ConcurrentHashMap<TransactionId, Boolean>>();
         //this is the data structure that we'll use heavily to check if the exclusive lock is gone, if the page doesn't have a lock, and so on
         this.page_lock_type = new ConcurrentHashMap<PageId, Permissions>();
+        //makes exercise 4 easy
+        this.tid_locks = new ConcurrentHashMap<TransactionId, ArrayList<PageId>>();
     }
 
     //only one thread at a time
     public synchronized void lock(TransactionId tid, PageId pid, Permissions perm) throws TransactionAbortedException {
-        if (this.getPageLockType(pid) != null){
+        if (!(this.tid_locks.containsKey(tid))){
+            this.tid_locks.put(tid, new ArrayList<PageId>());
+        }
+
+        if (this.getPageLockType(pid) == null) {
+            System.out.println(perm);
+            System.out.println(tid.getId());
+            this.grantNewPageLock(tid, pid, perm);
+        }
+        else {
+            System.out.println(perm);
+            System.out.println(tid.getId());
             if (perm == Permissions.READ_ONLY) {
                 if ((this.getPageLockType(pid) == Permissions.READ_ONLY) && !(this.page_locks.get(pid).containsKey(tid))) {
                     //check if its read only and we don't want to add in the same tid
                     this.page_locks.get(pid).put(tid, true);
+                    this.tid_locks.get(tid).add(pid);
                 }
                 else if ((this.getPageLockType(pid) == Permissions.READ_WRITE) && !(this.page_locks.get(pid).containsKey(tid))) {
                     //if page has write lock and the tid with lock isn't the same, then block until no exclusive lock and then create a new page lock
@@ -67,9 +82,6 @@ public class LockManager {
                 }
             }
         }
-        else {
-            this.grantNewPageLock(tid, pid, perm);
-        }
     }
 
     public synchronized Permissions getPageLockType(PageId pid){
@@ -79,6 +91,7 @@ public class LockManager {
 
     public synchronized void removeLock(TransactionId tid, PageId pid){
         this.page_locks.get(pid).remove(tid);
+        this.tid_locks.get(tid).remove(pid);
         if (this.page_locks.get(pid).entrySet().size() == 0){
             //nothing is locked
             this.page_lock_type.remove(pid);
@@ -92,6 +105,7 @@ public class LockManager {
         page_lock.put(tid, true);
         this.page_locks.put(pid, page_lock);
         this.page_lock_type.put(pid, perm);
+        this.tid_locks.get(tid).add(pid);
     }
 
     public synchronized Boolean holdsLock(TransactionId tid, PageId pid){
@@ -101,8 +115,18 @@ public class LockManager {
         }
         else { return false; }
     }
+
     public synchronized void block() throws TransactionAbortedException {
         try { Thread.sleep(100); }
         catch (Exception e){ throw new TransactionAbortedException(); }
+    }
+
+    public synchronized ArrayList<PageId> getPages(TransactionId tid){
+        if (this.tid_locks.containsKey(tid)){
+            return this.tid_locks.get(tid);
+        }
+        else {
+            return null;
+        }
     }
 }

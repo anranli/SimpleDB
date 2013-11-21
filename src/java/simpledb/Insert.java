@@ -105,9 +105,9 @@ public class Insert extends Operator {
             while (this.child.hasNext()){
                 try {
                     //if an exception happens, should we continue with the counter or stop?
-                    TransactionId tid = new TransactionId();
+                    //TransactionId tid = new TransactionId();
                     Tuple next = this.child.next();
-                    Database.getBufferPool().insertTuple(tid, this.tableid, next);
+                    Database.getBufferPool().insertTuple(this.t, this.tableid, next);
                     counter++;
                 }
                 catch (IOException io){

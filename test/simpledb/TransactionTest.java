@@ -75,17 +75,25 @@ public class TransactionTest extends TestUtil.CreateHeapFile {
     p.insertTuple(t);
     p.markDirty(true, tid1);
     bp.transactionComplete(tid1, commit);
+    System.out.println("Here1");
 
     // now, flush the buffer pool and access the page again from disk.
     bp = Database.resetBufferPool(BufferPool.DEFAULT_PAGES);
+    System.out.println("Here2");
     p = (HeapPage) bp.getPage(tid2, p2, Permissions.READ_WRITE);
     Iterator<Tuple> it = p.iterator();
 
     boolean found = false;
+    System.out.println("Here3");
+    System.out.println(it.hasNext());
     while (it.hasNext()) {
+      System.out.println("There");
       Tuple tup = (Tuple) it.next();
       IntField f0 = (IntField) tup.getField(0);
       IntField f1 = (IntField) tup.getField(1);
+
+      System.out.println(f0.getValue());
+      System.out.println(f1.getValue());
 
       if (f0.getValue() == 6 && f1.getValue() == 830) {
         found = true;
@@ -101,6 +109,7 @@ public class TransactionTest extends TestUtil.CreateHeapFile {
    * Verify that a tuple inserted during a committed transaction is durable
    */
   @Test public void commitTransaction() throws Exception {
+    System.out.println("commitTransaction");
     testTransactionComplete(true);
   }
 
@@ -109,6 +118,7 @@ public class TransactionTest extends TestUtil.CreateHeapFile {
    * Verify that a tuple inserted during a committed transaction is durable
    */
   @Test public void abortTransaction() throws Exception {
+    System.out.println("abortTransaction");
     testTransactionComplete(false);
   }
 

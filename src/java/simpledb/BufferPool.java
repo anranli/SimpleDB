@@ -65,9 +65,10 @@ public class BufferPool {
     
         if (!(this.buffer_pool.containsKey(pid))){
             if (this.buffer_pool.size() >= this.max_pages){
+                //remove a page
                 this.evictPage();
+                //now fetch a new page
                 return this.getPage(tid, pid, perm);
-              //throw new DbException("Too many pages");
             }
             else {
                 Page pg = (Database.getCatalog()).getDbFile(pid.getTableId()).readPage(pid); 
@@ -119,6 +120,7 @@ public class BufferPool {
     public void transactionComplete(TransactionId tid) throws IOException {
         // some code goes here
         // not necessary for proj1
+        this.transactionComplete(tid, true);
     }
 
     /** Return true if the specified transaction has a lock on the specified page */
@@ -139,6 +141,34 @@ public class BufferPool {
         throws IOException {
         // some code goes here
         // not necessary for proj1
+
+        if (commit == true){
+            this.commit(tid);
+        }
+        else { //abort
+            this.abort(tid);
+        }
+    }
+
+    public synchronized void commit(TransactionId tid) throws IOException{
+        if (this.lock_manager.getPages(tid) != null){
+            ArrayList<PageId> pages = this.lock_manager.getPages(tid);
+            for (int i = 0; i < pages.size(); i++){
+                if (this.buffer_pool.get(pages.get(i)).isDirty() == tid){
+                    this.flushPage(pages.get(i));
+                }
+                this.lock_manager.removeLock(tid, pages.get(i));
+            }
+        }
+    }
+    public synchronized void abort(TransactionId tid) throws IOException{
+        if (this.lock_manager.getPages(tid) != null){
+            ArrayList<PageId> pages = this.lock_manager.getPages(tid);
+            for (int i = 0; i < pages.size(); i++){
+                this.discardPage(pages.get(i));
+                this.lock_manager.removeLock(tid, pages.get(i));
+            }
+        }
     }
 
     /**
@@ -209,7 +239,7 @@ public class BufferPool {
     public synchronized void discardPage(PageId pid) {
         // some code goes here
     //not necessary for proj1
-    this.buffer_pool.remove(pid);
+        this.buffer_pool.remove(pid);
     }
 
     /**
