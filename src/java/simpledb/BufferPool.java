@@ -154,7 +154,9 @@ public class BufferPool {
         if (this.lock_manager.getPages(tid) != null){
             ArrayList<PageId> pages = this.lock_manager.getPages(tid);
             while (pages.size() != 0){
-                if (this.buffer_pool.get(pages.get(0)).isDirty() == tid){
+                HeapPage temp = (HeapPage) this.buffer_pool.get(pages.get(0)); 
+                if (temp != null && temp.isDirty() == tid) {
+                    temp.setBeforeImage();
                     this.flushPage(pages.get(0));
                 }
                 this.lock_manager.removeLock(tid, pages.get(0));
@@ -165,7 +167,11 @@ public class BufferPool {
         if (this.lock_manager.getPages(tid) != null){
             ArrayList<PageId> pages = this.lock_manager.getPages(tid);
             while (pages.size() != 0){
-                this.buffer_pool.put(pages.get(0), this.buffer_pool.get(pages.get(0)).getBeforeImage());
+                HeapPage temp = (HeapPage) this.buffer_pool.get(pages.get(0));
+                if ((temp != null) && (temp.isDirty() != null) && (temp.isDirty() == tid)){
+                    HeapPage oldData = temp.getBeforeImage();
+                    this.buffer_pool.put(pages.get(0), oldData);
+                }
                 this.lock_manager.removeLock(tid, pages.get(0));
             }
         }
