@@ -163,7 +163,7 @@ public class BufferPool {
             }
         }
     }
-    public synchronized void abort(TransactionId tid) throws IOException{
+    public synchronized void abort(TransactionId tid){
         if (this.lock_manager.getPages(tid) != null){
             ArrayList<PageId> pages = this.lock_manager.getPages(tid);
             while (pages.size() != 0){
@@ -256,7 +256,6 @@ public class BufferPool {
         // some code goes here
         // not necessary for proj1
         DbFile dbf = (Database.getCatalog()).getDbFile(pid.getTableId());
-        //DONT KNOW IF WE SHOULD ACCESS IT THROUGH GET INSTEAD OF GETPAGE
         if (this.buffer_pool.get(pid).isDirty() != null) {
             dbf.writePage(this.buffer_pool.get(pid));
         }
