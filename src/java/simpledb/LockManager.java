@@ -9,6 +9,7 @@ public class LockManager {
     ConcurrentHashMap<PageId, ConcurrentHashMap<TransactionId, Boolean>> page_locks;
     ConcurrentHashMap<PageId, Permissions> page_lock_type; 
     ConcurrentHashMap<TransactionId, ArrayList<PageId>> tid_locks; 
+    ConcurrentHashMap<TransactionId, PageId> waiting_on_locks;
 
     public LockManager() {
         // some code goes here
@@ -19,6 +20,7 @@ public class LockManager {
         this.page_lock_type = new ConcurrentHashMap<PageId, Permissions>();
         //makes exercise 4 easy
         this.tid_locks = new ConcurrentHashMap<TransactionId, ArrayList<PageId>>();
+        this.waiting_on_locks = new ConcurrentHashMap<TransactionId, PageId>();
     }
 
     //only one thread at a time
@@ -38,7 +40,6 @@ public class LockManager {
         else {
             //System.out.println(tid.getId());
             if (perm == Permissions.READ_ONLY) {
-
                 if ((this.getPageLockType(pid) == Permissions.READ_ONLY) && !(this.page_locks.get(pid).containsKey(tid))) {
                     //check if its read only and we don't want to add in the same tid
                     this.page_locks.get(pid).put(tid, true);
@@ -46,7 +47,9 @@ public class LockManager {
                 }
                 else if ((this.getPageLockType(pid) == Permissions.READ_WRITE) && !(this.page_locks.get(pid).containsKey(tid))) {
                     //if page has write lock and the tid with lock isn't the same, then block until no exclusive lock and then create a new page lock
-                    if (this.getPageLockType(pid) != null){ this.block(pid); }
+                    if (this.getPageLockType(pid) != null){ 
+                    	this.block(tid, pid); 
+                    }
 
                     //if the lock still isn't up, then throw an exception
                     if (this.getPageLockType(pid) == null){
@@ -55,11 +58,12 @@ public class LockManager {
                     else { throw new TransactionAbortedException(); }
                 }
             }
-            else {
+            //perm == Permissions.READ_WRITE
+            else { 
                 if (this.page_locks.get(pid).containsKey(tid)) {
                     //if the locks on this page contains the key, then block until
                     if (this.page_locks.get(pid).entrySet().size() != 1){ 
-                        this.block(pid);
+                        this.block(tid, pid);
                     }
 
                     //upgrade condition
@@ -76,7 +80,7 @@ public class LockManager {
                 }
                 else {
                     //since the tid isn't part of current locks, we have to block until all locks are gone
-                    if (this.getPageLockType(pid) != null){ this.block(pid); }
+                    if (this.getPageLockType(pid) != null){ this.block(tid, pid); }
 
                     if (this.getPageLockType(pid) == null){
                         this.grantNewPageLock(tid, pid, Permissions.READ_WRITE);
@@ -121,12 +125,72 @@ public class LockManager {
         else { return false; }
     }
 
-    public synchronized void block(PageId pid) throws TransactionAbortedException {
+    public synchronized void block(TransactionId tid, PageId pid) throws TransactionAbortedException {
         //try { Thread.sleep(100); }
         try {
-            while (this.getPageLockType(pid) != null){};
+        	//mark as 
+        	this.waiting_on_locks.put(tid, pid);
+            while (this.getPageLockType(pid) != null){
+            	if (deadLock(tid, pid)) {
+            		System.out.println("deadlocked");
+            		throw new TransactionAbortedException();
+            	}
+            	System.out.println(tid + " " + pid + " sleeping");
+            	Thread.sleep(100);
+            }
         }
         catch (Exception e){ throw new TransactionAbortedException(); }
+    }
+    
+    private synchronized boolean deadLock(TransactionId tid, PageId pid) {
+    	if (this.getPageLockType(pid) != null){ 
+	    	HashSet<PageId> set = new HashSet<PageId>();
+	    	
+	    	//add own locked pages to set
+	    	for (PageId ownPageId : this.tid_locks.get(tid)) {
+	    		set.add(ownPageId);
+	    	}
+	    	System.out.println("1. set: " + set);
+	    	
+	    	LinkedList<PageId> q = new LinkedList<PageId>();
+	    	q.add(pid);
+	    	set.add(pid);
+	    	System.out.println("2. q: " + q);
+	    	System.out.println("2. set: " + set);
+	    	
+	    	while (!q.isEmpty()) {
+	    		PageId tempPid = q.remove();
+	    		
+	    		// find tid that is holding tempPid removed from q and set as tempTid
+	    		Enumeration<TransactionId> e = this.page_locks.get(tempPid).keys();
+		    	while (e.hasMoreElements()) {
+		    		TransactionId tempTid = e.nextElement();
+		    		System.out.println("3. tempTid: " + tempTid);
+		    		
+		    		// only look at READ_WRITE
+		    		if (this.page_locks.get(tempPid).get(tempTid)) {
+		    			
+		    			System.out.println(this.waiting_on_locks);
+		    			// if it isn't waiting on anything, there is no deadlock
+		    			if (this.waiting_on_locks.get(tempTid) == null) {
+		    				return false;
+		    			}
+		    			
+		    			PageId nextPid = this.waiting_on_locks.get(tempTid);
+		    			System.out.println("4. nextPid: " + nextPid);
+		    			
+		    			// if waiting for something that's locked, deadlock
+		    			if (set.contains(nextPid)){
+		    				return true;
+		    			}
+		    			q.add(nextPid);
+		    			set.add(nextPid);
+		    		}
+		    	}
+	    		
+	    	}
+    	}
+    	return false;
     }
 
     public synchronized ArrayList<PageId> getPages(TransactionId tid){
