@@ -67,7 +67,6 @@ public class LockManager {
                         this.grantNewPageLock(tid, pid, Permissions.READ_WRITE);
                     }
                     else { 
-                        System.out.println((TransactionId) this.page_locks.get(pid).keySet().toArray()[0]);
                         (Database.getBufferPool()).abort(tid);
                         throw new TransactionAbortedException(); 
                     }
@@ -80,7 +79,6 @@ public class LockManager {
                         this.grantNewPageLock(tid, pid, Permissions.READ_WRITE);
                     }
                     else { 
-                        System.out.println((TransactionId) this.page_locks.get(pid).keySet().toArray()[0]);
                         (Database.getBufferPool()).abort(tid);
                         throw new TransactionAbortedException(); 
                     }
@@ -89,12 +87,12 @@ public class LockManager {
         }
     }
 
-    public synchronized Permissions getPageLockType(PageId pid){
+    public Permissions getPageLockType(PageId pid){
         if (page_lock_type.containsKey((PageId) pid)){ return page_lock_type.get((PageId) pid); }
         else { return null; }
     }
 
-    public synchronized void removeLock(TransactionId tid, PageId pid){
+    public void removeLock(TransactionId tid, PageId pid){
         this.page_locks.get(pid).remove(tid);
         this.tid_locks.get(tid).remove(pid);
         if (this.page_locks.get(pid).entrySet().size() == 0){
@@ -105,7 +103,7 @@ public class LockManager {
         }
     }
 
-    public synchronized void grantNewPageLock(TransactionId tid, PageId pid, Permissions perm){
+    public void grantNewPageLock(TransactionId tid, PageId pid, Permissions perm){
         ConcurrentHashMap<TransactionId, Permissions> page_lock = new ConcurrentHashMap<TransactionId, Permissions>();
         page_lock.put(tid, perm);
         this.page_locks.put(pid, page_lock);
@@ -113,7 +111,7 @@ public class LockManager {
         this.tid_locks.get(tid).add(pid);
     }
 
-    public synchronized Boolean holdsLock(TransactionId tid, PageId pid){
+    public Boolean holdsLock(TransactionId tid, PageId pid){
         if (this.getPageLockType(pid) != null){
             if (this.page_locks.get(pid).containsKey(tid)){ return true; }
             else{ return false; }
@@ -121,7 +119,7 @@ public class LockManager {
         else { return false; }
     }
 
-    public synchronized void block(PageId pid) throws TransactionAbortedException {
+    public void block(PageId pid) throws TransactionAbortedException {
         try {
             long start = System.currentTimeMillis();
             while ((this.getPageLockType(pid) != null) && (System.currentTimeMillis() - start < (long) 100)) {
@@ -131,7 +129,7 @@ public class LockManager {
         catch (Exception e){ throw new TransactionAbortedException(); }
     }
 
-    public synchronized ArrayList<PageId> getPages(TransactionId tid){
+    public ArrayList<PageId> getPages(TransactionId tid){
         if (this.tid_locks.containsKey(tid)){
             return this.tid_locks.get(tid);
         }

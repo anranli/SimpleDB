@@ -81,9 +81,8 @@ public class Delete extends Operator {
             //if we haven't called this before
             int counter = 0;
             while (this.child.hasNext()){
-                TransactionId tid = new TransactionId();
                 Tuple next = this.child.next();
-                Database.getBufferPool().deleteTuple(tid, next);
+                Database.getBufferPool().deleteTuple(this.t, next);
                 counter++;
             }
             this.called = true;
