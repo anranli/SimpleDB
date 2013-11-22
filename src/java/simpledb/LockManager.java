@@ -46,7 +46,7 @@ public class LockManager {
                 }
                 else if ((this.getPageLockType(pid) == Permissions.READ_WRITE) && !(this.page_locks.get(pid).containsKey(tid))) {
                     //if page has write lock and the tid with lock isn't the same, then block until no exclusive lock and then create a new page lock
-                    if (this.getPageLockType(pid) != null){ this.block(); }
+                    if (this.getPageLockType(pid) != null){ this.block(pid); }
 
                     //if the lock still isn't up, then throw an exception
                     if (this.getPageLockType(pid) == null){
@@ -59,7 +59,7 @@ public class LockManager {
                 if (this.page_locks.get(pid).containsKey(tid)) {
                     //if the locks on this page contains the key, then block until
                     if (this.page_locks.get(pid).entrySet().size() != 1){ 
-                        this.block();
+                        this.block(pid);
                     }
 
                     //upgrade condition
@@ -76,7 +76,7 @@ public class LockManager {
                 }
                 else {
                     //since the tid isn't part of current locks, we have to block until all locks are gone
-                    if (this.getPageLockType(pid) != null){ this.block(); }
+                    if (this.getPageLockType(pid) != null){ this.block(pid); }
 
                     if (this.getPageLockType(pid) == null){
                         this.grantNewPageLock(tid, pid, Permissions.READ_WRITE);
@@ -121,8 +121,11 @@ public class LockManager {
         else { return false; }
     }
 
-    public synchronized void block() throws TransactionAbortedException {
-        try { Thread.sleep(100); }
+    public synchronized void block(PageId pid) throws TransactionAbortedException {
+        //try { Thread.sleep(100); }
+        try {
+            while (this.getPageLockType(pid) != null){};
+        }
         catch (Exception e){ throw new TransactionAbortedException(); }
     }
 

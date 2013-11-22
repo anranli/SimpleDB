@@ -168,7 +168,7 @@ public class BufferPool {
             ArrayList<PageId> pages = this.lock_manager.getPages(tid);
             while (pages.size() != 0){
                 HeapPage temp = (HeapPage) this.buffer_pool.get(pages.get(0));
-                if ((temp != null) && (temp.isDirty() != null) && (temp.isDirty() == tid)){
+                if ((temp != null) && (temp.isDirty() == tid)){
                     HeapPage oldData = temp.getBeforeImage();
                     this.buffer_pool.put(pages.get(0), oldData);
                 }
