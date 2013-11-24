@@ -1,4 +1,5 @@
-Jhoong Roh, cs186-eh; Anran Li, cs186-mz
+Jhoong Roh, cs186-eh
+Anran Li, cs186-mz
 
 1. Design decisions
 Lock granularity: Page-level. The buffer pool holds pages so it's easier to simply work with pages when locking.
