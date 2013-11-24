@@ -50,25 +50,21 @@ public class InsertTest extends SimpleDbTestBase {
 
     @Test public void testEmptyToEmpty()
             throws IOException, DbException, TransactionAbortedException {
-        System.out.println("testEmtpyToEmpty");
         validateInsert(3, 0, 0);
     }
 
     @Test public void testEmptyToOne()
             throws IOException, DbException, TransactionAbortedException {
-        System.out.println("testEmtpyToOne");
         validateInsert(8, 0, 1);
     }
 
     @Test public void testOneToEmpty()
             throws IOException, DbException, TransactionAbortedException {
-        System.out.println("testOneToEmpty");
         validateInsert(3, 1, 0);
     }
 
     @Test public void testOneToOne()
             throws IOException, DbException, TransactionAbortedException {
-        System.out.println("testOneToOne");
         validateInsert(1, 1, 1);
     }
 

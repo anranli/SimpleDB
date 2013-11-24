@@ -134,15 +134,6 @@ public class LockingTest extends TestUtil.CreateHeapFile {
 
   /**
    * Unit test for BufferPool.getPage() assuming locking.
-   * Acquires a read lock and a write lock on different pages.
-   */
-  @Test public void acquireWriteReadLocksOnTwoPages() throws Exception {
-    metaLockTester(tid1, p0, Permissions.READ_WRITE,
-                   tid2, p1, Permissions.READ_ONLY, true);
-  }
-  
-  /**
-   * Unit test for BufferPool.getPage() assuming locking.
    * Acquires write locks on different pages.
    */
   @Test public void acquireWriteLocksOnTwoPages() throws Exception {
@@ -203,3 +194,4 @@ public class LockingTest extends TestUtil.CreateHeapFile {
   }
 
 }
+

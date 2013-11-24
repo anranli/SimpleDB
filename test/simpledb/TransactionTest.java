@@ -17,7 +17,6 @@ public class TransactionTest extends TestUtil.CreateHeapFile {
    * Set up initial resources for each unit test.
    */
   @Before public void setUp() throws Exception {
-    // System.out.println("Setup");
     super.setUp();
 
     // clear all state from the buffer pool
@@ -54,7 +53,6 @@ public class TransactionTest extends TestUtil.CreateHeapFile {
    * during transactionComplete().
    */
   @Test public void attemptTransactionTwice() throws Exception {
-    // System.out.println("attemptTransactionTwice");
     bp.getPage(tid1, p0, Permissions.READ_ONLY);
     bp.getPage(tid1, p1, Permissions.READ_WRITE);
     bp.transactionComplete(tid1, true);
@@ -76,19 +74,15 @@ public class TransactionTest extends TestUtil.CreateHeapFile {
 
     p.insertTuple(t);
     p.markDirty(true, tid1);
-    // System.out.println("tid1: " + tid1);
     bp.transactionComplete(tid1, commit);
 
     // now, flush the buffer pool and access the page again from disk.
     bp = Database.resetBufferPool(BufferPool.DEFAULT_PAGES);
-    // System.out.println("tid2: " + tid2);
     p = (HeapPage) bp.getPage(tid2, p2, Permissions.READ_WRITE);
     Iterator<Tuple> it = p.iterator();
-    // System.out.println("Woah");
 
     boolean found = false;
     while (it.hasNext()) {
-      // System.out.println("There");
       Tuple tup = (Tuple) it.next();
       IntField f0 = (IntField) tup.getField(0);
       IntField f1 = (IntField) tup.getField(1);
@@ -107,7 +101,6 @@ public class TransactionTest extends TestUtil.CreateHeapFile {
    * Verify that a tuple inserted during a committed transaction is durable
    */
   @Test public void commitTransaction() throws Exception {
-    // System.out.println("commitTransaction");
     testTransactionComplete(true);
   }
 
@@ -116,7 +109,6 @@ public class TransactionTest extends TestUtil.CreateHeapFile {
    * Verify that a tuple inserted during a committed transaction is durable
    */
   @Test public void abortTransaction() throws Exception {
-    // System.out.println("abortTransaction");
     testTransactionComplete(false);
   }
 
