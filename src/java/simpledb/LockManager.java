@@ -122,7 +122,7 @@ public class LockManager {
     public void block(PageId pid) throws TransactionAbortedException {
         try {
             long start = System.currentTimeMillis();
-            while ((this.getPageLockType(pid) != null) && (System.currentTimeMillis() - start < (long) 100)) {
+            while ((this.getPageLockType(pid) != null) && (System.currentTimeMillis() - start < (long) 500)) {
                 Thread.sleep(15);
             };
         }
