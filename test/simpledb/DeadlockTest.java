@@ -247,7 +247,7 @@ public class DeadlockTest extends TestUtil.CreateHeapFile {
 
         tid1 = new TransactionId();
         lg1Write0 = startGrabber(tid1, p0, Permissions.READ_WRITE);
-    lg1Write2 = startGrabber(tid1, p1, Permissions.READ_WRITE);
+		lg1Write2 = startGrabber(tid1, p1, Permissions.READ_WRITE);
         lg1Write1 = startGrabber(tid1, p2, Permissions.READ_WRITE);
       }
 
